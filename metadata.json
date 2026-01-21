@@ -1,0 +1,7 @@
+{
+  "name": "BBUC Library Management System",
+  "description": "The official library management system for Bishop Barham University College, featuring AI-powered academic assistance and administrative tools.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
