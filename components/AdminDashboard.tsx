@@ -8,10 +8,18 @@ interface AdminDashboardProps {
   records: BorrowRecord[];
   users: User[];
   onIssueCard: (userId: string) => void;
+  onUpdateBookStatus: (bookId: string, newStatus: BookStatus) => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, onIssueCard }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, onIssueCard, onUpdateBookStatus }) => {
   const [activeTab, setActiveTab] = useState<'books' | 'users'>('books');
+
+  const handleToggleStatus = (book: Book) => {
+    const nextStatus = book.status === BookStatus.AVAILABLE 
+      ? BookStatus.BORROWED 
+      : BookStatus.AVAILABLE;
+    onUpdateBookStatus(book.id, nextStatus);
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-10">
@@ -70,9 +78,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, 
               <thead>
                 <tr className="text-slate-400 text-xs font-bold uppercase tracking-widest border-b border-slate-50">
                   <th className="px-8 py-5">Book Info</th>
-                  <th className="px-8 py-5">Status</th>
+                  <th className="px-8 py-5">Quick Status</th>
+                  <th className="px-8 py-5">Badge</th>
                   <th className="px-8 py-5">Department</th>
-                  <th className="px-8 py-5">Category</th>
                   <th className="px-8 py-5">Action</th>
                 </tr>
               </thead>
@@ -81,11 +89,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, 
                   <tr key={book.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <img src={book.coverUrl} className="w-10 h-14 rounded-lg object-cover" />
+                        <img src={book.coverUrl} className="w-10 h-14 rounded-lg object-cover shadow-sm border border-slate-100" />
                         <div>
-                          <p className="font-bold text-slate-800">{book.title}</p>
-                          <p className="text-sm text-slate-400">{book.author}</p>
+                          <p className="font-bold text-slate-800 leading-tight">{book.title}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{book.author}</p>
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      {/* NEW: Toggle Switch */}
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => handleToggleStatus(book)}
+                          disabled={book.status === BookStatus.RESERVED}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                            book.status === BookStatus.AVAILABLE ? 'bg-emerald-500' : 'bg-slate-200'
+                          }`}
+                        >
+                          <span className="sr-only">Toggle book status</span>
+                          <span
+                            aria-hidden="true"
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              book.status === BookStatus.AVAILABLE ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${book.status === BookStatus.AVAILABLE ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          {book.status === BookStatus.AVAILABLE ? 'Available' : 'On Loan'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-8 py-5">
@@ -97,13 +128,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, 
                       </span>
                     </td>
                     <td className="px-8 py-5">
-                      <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
+                      <span className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500">
                         {book.department}
                       </span>
                     </td>
-                    <td className="px-8 py-5 text-sm font-medium text-slate-600">{book.category}</td>
                     <td className="px-8 py-5">
-                      <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                      <button className="p-2 text-slate-300 hover:text-blue-600 transition-colors">
                         <Icons.Settings />
                       </button>
                     </td>

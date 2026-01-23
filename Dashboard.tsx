@@ -25,6 +25,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
     return days === 0 ? 'Returned same day' : `Kept for ${days} days`;
   };
 
+  const getDaysDiff = (dueDate: string) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - now.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-24">
       {/* Header Section */}
@@ -145,34 +152,77 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
           <div className="space-y-4">
             {activeBorrows.length > 0 ? activeBorrows.map(record => {
               const book = getBook(record.bookId);
-              const isOverdue = new Date(record.dueDate) < new Date();
+              const daysLeft = getDaysDiff(record.dueDate);
+              const isOverdue = daysLeft <= 0;
+              const isUrgent = daysLeft > 0 && daysLeft <= 3;
+              
+              // Standard borrow period is 14 days for calculations
+              const progress = isOverdue ? 100 : Math.min(100, Math.max(0, ((14 - daysLeft) / 14) * 100));
+
               return (
-                <div key={record.id} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all flex gap-5 items-center">
-                  <div className="relative">
-                    <img src={book?.coverUrl} alt={book?.title} className="w-20 h-28 rounded-2xl object-cover shadow-md group-hover:scale-105 transition-transform duration-500" />
-                    {isOverdue && (
-                      <div className="absolute -top-2 -left-2 bg-red-600 text-white p-1.5 rounded-xl shadow-lg animate-bounce">
-                        <Icons.Bell />
+                <div key={record.id} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all flex flex-col gap-4">
+                  <div className="flex gap-5 items-center">
+                    <div className="relative">
+                      <img src={book?.coverUrl} alt={book?.title} className="w-20 h-28 rounded-2xl object-cover shadow-md group-hover:scale-105 transition-transform duration-500" />
+                      {isOverdue && (
+                        <div className="absolute -top-2 -left-2 bg-red-600 text-white p-1.5 rounded-xl shadow-lg animate-bounce">
+                          <Icons.Bell />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{book?.category}</span>
+                        {isOverdue ? (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[8px] font-black uppercase tracking-widest rounded-lg border border-red-200 animate-pulse">
+                            OVERDUE
+                          </span>
+                        ) : isUrgent ? (
+                          <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[8px] font-black uppercase tracking-widest rounded-lg border border-amber-200">
+                            DUE SOON
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded-lg border border-blue-100">
+                            {daysLeft} DAYS LEFT
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{book?.category}</span>
-                      {isOverdue && <span className="text-[9px] font-black text-red-600 uppercase tracking-widest animate-pulse">Overdue</span>}
+                      <h3 className="font-black text-slate-900 truncate text-lg leading-tight group-hover:text-blue-700 transition-colors">{book?.title}</h3>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Due Date</p>
+                      <p className={`text-sm font-bold mt-0.5 ${isOverdue ? 'text-red-600' : 'text-slate-700'}`}>
+                        {new Date(record.dueDate).toLocaleDateString(undefined, { 
+                          weekday: 'short',
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </p>
                     </div>
-                    <h3 className="font-black text-slate-900 truncate text-lg leading-tight group-hover:text-blue-700 transition-colors">{book?.title}</h3>
-                    <p className="text-sm text-slate-500 font-medium mt-1">Due {new Date(record.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                    <div className="mt-4 w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                      <div className={`h-full transition-all duration-1000 ${isOverdue ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: isOverdue ? '100%' : '65%' }}></div>
+                    <button 
+                      onClick={() => onReturn(record.bookId)}
+                      className="shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest text-white bg-slate-900 rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-slate-100"
+                    >
+                      Return
+                    </button>
+                  </div>
+                  
+                  {/* Progress Indicator */}
+                  <div className="px-1">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Loan Progress</span>
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${isOverdue ? 'text-red-600' : 'text-slate-500'}`}>
+                        {isOverdue ? 'Expired' : `${Math.round(progress)}% of term`}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden border border-slate-100">
+                      <div 
+                        className={`h-full transition-all duration-1000 ${
+                          isOverdue ? 'bg-red-500' : isUrgent ? 'bg-amber-400' : 'bg-blue-600'
+                        }`} 
+                        style={{ width: `${progress}%` }}
+                      ></div>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => onReturn(record.bookId)}
-                    className="shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest text-white bg-slate-900 rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-slate-100"
-                  >
-                    Return
-                  </button>
                 </div>
               );
             }) : (
@@ -227,7 +277,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
         </section>
       </div>
 
-      {/* NEW: Enhanced Borrowing History Section */}
+      {/* READING HISTORY */}
       <section className="animate-in pt-4">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 px-2 gap-4">
           <div>

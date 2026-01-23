@@ -9,7 +9,7 @@ interface CatalogProps {
   onReserve: (bookId: string) => void;
 }
 
-type SortField = 'title' | 'author' | 'publishYear';
+type SortField = 'title' | 'author' | 'publishYear' | 'course';
 type SortOrder = 'asc' | 'desc';
 
 const DEPARTMENTS = [
@@ -69,10 +69,12 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
 
   // Dynamic category extraction with sorting
   const categories = useMemo(() => {
-    const unique = Array.from(new Set(books.map(b => b.category))).sort((a, b) => a.localeCompare(b));
+    // Fix: Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
+    const unique = Array.from(new Set(books.map(b => b.category))).sort((a: string, b: string) => a.localeCompare(b));
     return ['All', ...unique];
   }, [books]);
 
+  // Fix: Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
   const years = useMemo(() => ['All', ...Array.from(new Set(books.map(b => b.publishYear.toString()))).sort((a: string, b: string) => b.localeCompare(a))], [books]);
   const statuses = ['All', ...Object.values(BookStatus)];
 
@@ -147,7 +149,10 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
       if (sortBy === 'publishYear') {
         comparison = a.publishYear - b.publishYear;
       } else {
-        comparison = a[sortBy].localeCompare(b[sortBy]);
+        // Fix: Use explicit index access with cast to string to handle 'unknown' or union type issues
+        const aVal = a[sortBy] as string;
+        const bVal = b[sortBy] as string;
+        comparison = aVal.localeCompare(bVal);
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -431,7 +436,7 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
               <div className="flex items-center gap-4 w-full sm:w-auto">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 whitespace-nowrap">Sort Order</p>
                 <div className="flex flex-wrap gap-2">
-                  {(['title', 'author', 'publishYear'] as SortField[]).map(field => (
+                  {(['title', 'author', 'course', 'publishYear'] as SortField[]).map(field => (
                     <button
                       key={field}
                       onClick={() => handleSort(field)}
@@ -441,7 +446,7 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
                           : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200 hover:text-slate-600'
                       }`}
                     >
-                      {field === 'publishYear' ? 'Publication Year' : field.charAt(0).toUpperCase() + field.slice(1)}
+                      {field === 'publishYear' ? 'Publication Year' : field === 'course' ? 'Course Curriculum' : field.charAt(0).toUpperCase() + field.slice(1)}
                       {sortBy === field && (
                         <span className={`transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}>
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
@@ -544,6 +549,9 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
               setYearFilter('All');
               setSelectedDepartments([]);
               setSelectedCourses([]);
+              setShowSuggestions(false);
+              setSortBy('title');
+              setSortOrder('asc');
             }}
             className="mt-8 px-10 py-4 bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-xl shadow-blue-100 active:scale-95"
           >
