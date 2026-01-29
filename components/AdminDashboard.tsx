@@ -7,18 +7,35 @@ interface AdminDashboardProps {
   books: Book[];
   records: BorrowRecord[];
   users: User[];
-  onIssueCard: (userId: string) => void;
+  onIssueCard: (userId: string) => Promise<any>;
   onUpdateBookStatus: (bookId: string, newStatus: BookStatus) => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, onIssueCard, onUpdateBookStatus }) => {
   const [activeTab, setActiveTab] = useState<'books' | 'users'>('books');
+  const [issuingId, setIssuingId] = useState<string | null>(null);
+  const [successId, setSuccessId] = useState<string | null>(null);
 
   const handleToggleStatus = (book: Book) => {
     const nextStatus = book.status === BookStatus.AVAILABLE 
       ? BookStatus.BORROWED 
       : BookStatus.AVAILABLE;
     onUpdateBookStatus(book.id, nextStatus);
+  };
+
+  const handleIssueCard = async (userId: string) => {
+    setIssuingId(userId);
+    try {
+      await onIssueCard(userId);
+      setSuccessId(userId);
+      // Clear success state after 3 seconds
+      setTimeout(() => setSuccessId(null), 3000);
+    } catch (err) {
+      console.error("Failed to issue card:", err);
+      alert("System error: Could not issue library card. Please check database connection.");
+    } finally {
+      setIssuingId(null);
+    }
   };
 
   return (
@@ -97,7 +114,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, 
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      {/* NEW: Toggle Switch */}
                       <div className="flex items-center gap-3">
                         <button 
                           onClick={() => handleToggleStatus(book)}
@@ -172,21 +188,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ books, records, users, 
                     </td>
                     <td className="px-8 py-5">
                       {u.libraryCard ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-emerald-500"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></span>
-                          <span className="font-mono text-xs font-bold text-slate-500">{u.libraryCard.cardNumber}</span>
+                        <div className="flex items-center gap-2 group/card">
+                          <span className="text-emerald-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-mono text-[11px] font-black text-slate-600 tracking-tighter">{u.libraryCard.cardNumber}</span>
+                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest leading-none mt-0.5">Expires {new Date(u.libraryCard.expiryDate).getFullYear()}</span>
+                          </div>
                         </div>
                       ) : (
-                        <span className="text-xs font-bold text-slate-300">Not Issued</span>
+                        <div className="flex items-center gap-2 text-slate-200">
+                          <Icons.IdCard />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Unissued</span>
+                        </div>
                       )}
                     </td>
                     <td className="px-8 py-5">
                       {!u.libraryCard && u.role !== UserRole.ADMIN ? (
                         <button 
-                          onClick={() => onIssueCard(u.id)}
-                          className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+                          onClick={() => handleIssueCard(u.id)}
+                          disabled={issuingId === u.id || successId === u.id}
+                          className={`min-w-[140px] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-2 ${
+                            successId === u.id 
+                              ? 'bg-emerald-500 text-white shadow-emerald-100' 
+                              : issuingId === u.id
+                                ? 'bg-slate-100 text-slate-400'
+                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100 active:scale-95'
+                          }`}
                         >
-                          Issue Library Card
+                          {issuingId === u.id ? (
+                            <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin"></div>
+                          ) : successId === u.id ? (
+                            <>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                              Issued
+                            </>
+                          ) : (
+                            'Issue Library Card'
+                          )}
                         </button>
                       ) : (
                         <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">

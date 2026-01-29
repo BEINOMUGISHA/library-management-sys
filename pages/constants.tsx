@@ -54,7 +54,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Pedagogy',
     department: 'Education',
     course: 'Education',
-    coverUrl: 'https://picsum.photos/seed/edu1/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'An exploration of educational theories and their impact on modern society.',
     status: BookStatus.AVAILABLE,
     publishYear: 1916
@@ -67,7 +67,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Networks',
     department: 'IT',
     course: 'Information Technology',
-    coverUrl: 'https://picsum.photos/seed/it1/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'A comprehensive guide to computer networking and protocols.',
     status: BookStatus.BORROWED,
     publishYear: 2021
@@ -80,7 +80,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Theology',
     department: 'Theology',
     course: 'Theology & Divinity',
-    coverUrl: 'https://picsum.photos/seed/theo1/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'An introduction to biblical doctrine for students of the Bible.',
     status: BookStatus.AVAILABLE,
     publishYear: 1994
@@ -93,7 +93,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Marketing',
     department: 'Business',
     course: 'Business Administration',
-    coverUrl: 'https://picsum.photos/seed/biz1/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'The standard textbook for understanding consumer markets and business strategy.',
     status: BookStatus.RESERVED,
     publishYear: 2017
@@ -106,7 +106,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Media',
     department: 'Journalism',
     course: 'Journalism & Media',
-    coverUrl: 'https://picsum.photos/seed/jour1/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'What newspeople should know and the public should expect.',
     status: BookStatus.AVAILABLE,
     publishYear: 2014
@@ -119,7 +119,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Sociology',
     department: 'Social Sciences',
     course: 'Social Work',
-    coverUrl: 'https://picsum.photos/seed/soc1/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'How we think about, influence, and relate to one another in society.',
     status: BookStatus.AVAILABLE,
     publishYear: 2018
@@ -132,7 +132,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Programming',
     department: 'IT',
     course: 'Information Technology',
-    coverUrl: 'https://picsum.photos/seed/it2/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'The complete guide to Java programming language for beginners and pros.',
     status: BookStatus.AVAILABLE,
     publishYear: 2018
@@ -145,7 +145,7 @@ export const MOCK_BOOKS: Book[] = [
     category: 'Theology',
     department: 'Theology',
     course: 'Theology & Divinity',
-    coverUrl: 'https://picsum.photos/seed/theo2/400/600',
+    coverUrl: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'A detailed look at the historical and theological context of the Old Testament.',
     status: BookStatus.AVAILABLE,
     publishYear: 1992

@@ -85,11 +85,14 @@ export const libraryService = {
   },
 
   /**
-   * Library card issuance
+   * Library card issuance with professional institutional formatting
    */
   async issueLibraryCard(userId: string) {
+    const year = new Date().getFullYear();
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4 digit random
+    
     const newCard: LibraryCard = {
-      cardNumber: 'BBUC-' + Math.random().toString().slice(2, 10),
+      cardNumber: `BBUC/${year}/${randomSuffix}`,
       issueDate: new Date().toISOString(),
       expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'ACTIVE'

@@ -1,9 +1,11 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Book, BookStatus } from '../types';
+import { Book, BookStatus, User } from '../types';
 import { Icons } from './constants';
 
 interface CatalogProps {
+  // Added user prop to resolve type error in App.tsx
+  user: User;
   books: Book[];
   onBorrow: (bookId: string) => void;
   onReserve: (bookId: string) => void;
@@ -51,7 +53,8 @@ const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query
   );
 };
 
-const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
+// Added user to destructuring
+const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -69,12 +72,12 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
 
   // Dynamic category extraction with sorting
   const categories = useMemo(() => {
-    // Fix: Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
+    // Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
     const unique = Array.from(new Set(books.map(b => b.category))).sort((a: string, b: string) => a.localeCompare(b));
     return ['All', ...unique];
   }, [books]);
 
-  // Fix: Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
+  // Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
   const years = useMemo(() => ['All', ...Array.from(new Set(books.map(b => b.publishYear.toString()))).sort((a: string, b: string) => b.localeCompare(a))], [books]);
   const statuses = ['All', ...Object.values(BookStatus)];
 
@@ -149,7 +152,7 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
       if (sortBy === 'publishYear') {
         comparison = a.publishYear - b.publishYear;
       } else {
-        // Fix: Use explicit index access with cast to string to handle 'unknown' or union type issues
+        // Use explicit index access with cast to string to handle 'unknown' type
         const aVal = a[sortBy] as string;
         const bVal = b[sortBy] as string;
         comparison = aVal.localeCompare(bVal);
@@ -507,19 +510,41 @@ const Catalog: React.FC<CatalogProps> = ({ books, onBorrow, onReserve }) => {
               
               <div className="flex items-center gap-2 mt-auto">
                 {book.status === BookStatus.AVAILABLE ? (
-                  <button 
-                    onClick={() => onBorrow(book.id)}
-                    className="flex-1 bg-blue-700 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-100 active:scale-95 transform"
-                  >
-                    Borrow
-                  </button>
+                  // Implementing library card validation as required by the UI state
+                  user.libraryCard ? (
+                    <button 
+                      onClick={() => onBorrow(book.id)}
+                      className="flex-1 bg-blue-700 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-100 active:scale-95 transform"
+                    >
+                      Borrow
+                    </button>
+                  ) : (
+                    <button 
+                      disabled
+                      title="Bishop Barham Library Card Required"
+                      className="flex-1 bg-slate-100 text-slate-400 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed border-2 border-dashed border-slate-200"
+                    >
+                      Card Required
+                    </button>
+                  )
                 ) : book.status === BookStatus.BORROWED ? (
-                  <button 
-                    onClick={() => onReserve(book.id)}
-                    className="flex-1 bg-white text-blue-700 border-2 border-blue-700 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95 transform"
-                  >
-                    Reserve
-                  </button>
+                  // Implementing library card validation for reservation
+                  user.libraryCard ? (
+                    <button 
+                      onClick={() => onReserve(book.id)}
+                      className="flex-1 bg-white text-blue-700 border-2 border-blue-700 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95 transform"
+                    >
+                      Reserve
+                    </button>
+                  ) : (
+                    <button 
+                      disabled
+                      title="Bishop Barham Library Card Required"
+                      className="flex-1 bg-slate-100 text-slate-400 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed border-2 border-dashed border-slate-200"
+                    >
+                      Card Required
+                    </button>
+                  )
                 ) : (
                   <button 
                     disabled

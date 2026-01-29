@@ -52,6 +52,7 @@ const App: React.FC = () => {
       <Route path="/" element={
         <Layout user={user} onLogout={handleLogout}>
           <Catalog 
+            user={user!}
             books={books} 
             onBorrow={(id) => actions.borrow(id, user!.id)} 
             onReserve={(id) => actions.reserve(id, user!.id)} 
