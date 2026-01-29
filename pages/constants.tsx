@@ -57,7 +57,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'An exploration of educational theories and their impact on modern society.',
     status: BookStatus.AVAILABLE,
-    publishYear: 1916
+    publishYear: 1916,
+    academicYear: 'Year 1'
   },
   {
     id: '2',
@@ -70,7 +71,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'A comprehensive guide to computer networking and protocols.',
     status: BookStatus.BORROWED,
-    publishYear: 2021
+    publishYear: 2021,
+    academicYear: 'Year 2'
   },
   {
     id: '3',
@@ -83,7 +85,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'An introduction to biblical doctrine for students of the Bible.',
     status: BookStatus.AVAILABLE,
-    publishYear: 1994
+    publishYear: 1994,
+    academicYear: 'Year 3'
   },
   {
     id: '4',
@@ -96,7 +99,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'The standard textbook for understanding consumer markets and business strategy.',
     status: BookStatus.RESERVED,
-    publishYear: 2017
+    publishYear: 2017,
+    academicYear: 'Year 2'
   },
   {
     id: '5',
@@ -109,7 +113,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'What newspeople should know and the public should expect.',
     status: BookStatus.AVAILABLE,
-    publishYear: 2014
+    publishYear: 2014,
+    academicYear: 'Year 1'
   },
   {
     id: '6',
@@ -122,7 +127,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'How we think about, influence, and relate to one another in society.',
     status: BookStatus.AVAILABLE,
-    publishYear: 2018
+    publishYear: 2018,
+    academicYear: 'Year 2'
   },
   {
     id: '7',
@@ -135,7 +141,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'The complete guide to Java programming language for beginners and pros.',
     status: BookStatus.AVAILABLE,
-    publishYear: 2018
+    publishYear: 2018,
+    academicYear: 'Year 1'
   },
   {
     id: '8',
@@ -148,7 +155,8 @@ export const MOCK_BOOKS: Book[] = [
     coverUrl: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=400&h=600',
     description: 'A detailed look at the historical and theological context of the Old Testament.',
     status: BookStatus.AVAILABLE,
-    publishYear: 1992
+    publishYear: 1992,
+    academicYear: 'Postgraduate'
   }
 ];
 
@@ -212,5 +220,8 @@ export const Icons = {
   ),
   Calendar: () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+  ),
+  GraduationCap: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
   )
 };

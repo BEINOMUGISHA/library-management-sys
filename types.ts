@@ -40,6 +40,7 @@ export interface Book {
   description: string;
   status: BookStatus;
   publishYear: number;
+  academicYear: string;
 }
 
 export interface BorrowRecord {

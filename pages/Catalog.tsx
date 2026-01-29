@@ -59,6 +59,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [yearFilter, setYearFilter] = useState('All');
+  const [academicYearFilter, setAcademicYearFilter] = useState('All');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortField>('title');
@@ -79,6 +80,13 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
 
   // Explicitly type sort parameters to avoid 'unknown' type error in Array.from().sort()
   const years = useMemo(() => ['All', ...Array.from(new Set(books.map(b => b.publishYear.toString()))).sort((a: string, b: string) => b.localeCompare(a))], [books]);
+  
+  // Dynamic Academic Year extraction
+  const academicYears = useMemo(() => {
+    const unique = Array.from(new Set(books.map(b => b.academicYear))).sort((a: string, b: string) => a.localeCompare(b));
+    return ['All', ...unique];
+  }, [books]);
+
   const statuses = ['All', ...Object.values(BookStatus)];
 
   const departmentCounts = useMemo(() => {
@@ -141,10 +149,11 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
       const matchesCategory = categoryFilter === 'All' || book.category === categoryFilter;
       const matchesStatus = statusFilter === 'All' || book.status === statusFilter;
       const matchesYear = yearFilter === 'All' || book.publishYear.toString() === yearFilter;
+      const matchesAcademicYear = academicYearFilter === 'All' || book.academicYear === academicYearFilter;
       const matchesDepartment = selectedDepartments.length === 0 || selectedDepartments.includes(book.department);
       const matchesCourse = selectedCourses.length === 0 || selectedCourses.includes(book.course);
       
-      return matchesSearch && matchesCategory && matchesStatus && matchesYear && matchesDepartment && matchesCourse;
+      return matchesSearch && matchesCategory && matchesStatus && matchesYear && matchesAcademicYear && matchesDepartment && matchesCourse;
     });
 
     result.sort((a, b) => {
@@ -161,7 +170,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
     });
 
     return result;
-  }, [books, search, categoryFilter, statusFilter, yearFilter, selectedDepartments, selectedCourses, sortBy, sortOrder]);
+  }, [books, search, categoryFilter, statusFilter, yearFilter, academicYearFilter, selectedDepartments, selectedCourses, sortBy, sortOrder]);
 
   const suggestions = useMemo(() => {
     if (search.length < 2) return [];
@@ -218,7 +227,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
     }
   };
 
-  const hasActiveFilters = search || categoryFilter !== 'All' || statusFilter !== 'All' || yearFilter !== 'All' || selectedDepartments.length > 0 || selectedCourses.length > 0;
+  const hasActiveFilters = search || categoryFilter !== 'All' || statusFilter !== 'All' || yearFilter !== 'All' || academicYearFilter !== 'All' || selectedDepartments.length > 0 || selectedCourses.length > 0;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20">
@@ -236,6 +245,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
                 setCategoryFilter('All');
                 setStatusFilter('All');
                 setYearFilter('All');
+                setAcademicYearFilter('All');
                 setSelectedDepartments([]);
                 setSelectedCourses([]);
                 setShowSuggestions(false);
@@ -252,9 +262,9 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
         
         {/* Advanced Filters Panel */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-8">
-          {/* Main Search Row */}
+          {/* Main Search Row - Adjusted grid layout to accommodate 5 elements */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6 relative" ref={suggestionRef}>
+            <div className="md:col-span-4 relative" ref={suggestionRef}>
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                 <Icons.Search />
               </span>
@@ -262,7 +272,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
                 ref={searchInputRef}
                 type="text" 
                 placeholder="Find resources by title, author, or ISBN..."
-                className="w-full pl-11 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 transition-all outline-none font-medium placeholder:text-slate-400"
+                className="w-full pl-11 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 transition-all outline-none font-medium placeholder:text-slate-400 text-sm"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -329,7 +339,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
               </span>
               <select 
-                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-sm font-bold appearance-none ${categoryFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
+                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-xs font-bold appearance-none ${categoryFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
               >
@@ -344,7 +354,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </span>
               <select 
-                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-sm font-bold appearance-none ${statusFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
+                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-xs font-bold appearance-none ${statusFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -353,16 +363,31 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
               </select>
             </div>
 
+            {/* Academic Year Dropdown */}
             <div className="md:col-span-2 relative">
                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <Icons.GraduationCap />
               </span>
               <select 
-                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-sm font-bold appearance-none ${yearFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
+                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-xs font-bold appearance-none ${academicYearFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
+                value={academicYearFilter}
+                onChange={(e) => setAcademicYearFilter(e.target.value)}
+              >
+                <option value="All">Academic Year</option>
+                {academicYears.filter(y => y !== 'All').map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+
+            <div className="md:col-span-2 relative">
+               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10">
+                <Icons.Calendar />
+              </span>
+              <select 
+                className={`w-full pl-10 pr-4 py-4 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all cursor-pointer text-xs font-bold appearance-none ${yearFilter !== 'All' ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-600'}`}
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
               >
-                <option value="All">All Years</option>
+                <option value="All">Pub. Year</option>
                 {years.filter(y => y !== 'All').map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
@@ -499,7 +524,10 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
             
             <div className="p-6 flex-1 flex flex-col">
               <div className="mb-4">
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{book.category}</span>
+                <div className="flex justify-between items-start">
+                   <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{book.category}</span>
+                   <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">{book.academicYear}</span>
+                </div>
                 <h3 className="text-xl font-bold text-slate-900 line-clamp-1 mt-1 group-hover:text-blue-700 transition-colors tracking-tight">{book.title}</h3>
                 <p className="text-slate-500 font-medium">by {book.author}</p>
               </div>
@@ -572,6 +600,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, onBorrow, onReserve }) =
               setCategoryFilter('All');
               setStatusFilter('All');
               setYearFilter('All');
+              setAcademicYearFilter('All');
               setSelectedDepartments([]);
               setSelectedCourses([]);
               setShowSuggestions(false);

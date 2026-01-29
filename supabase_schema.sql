@@ -30,6 +30,7 @@ CREATE TABLE public.books (
     description TEXT,
     status book_status DEFAULT 'AVAILABLE',
     "publishYear" INTEGER,
+    academic_year TEXT, -- Added for curriculum year filtering
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

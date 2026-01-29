@@ -258,28 +258,63 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
         <section className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Holds Queue</h2>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Active Resource Holds</h2>
               <p className="text-sm text-slate-500 font-medium">Resources reserved for your upcoming use.</p>
             </div>
+            <span className="px-4 py-1.5 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-200">
+              {reservations.length} Pending
+            </span>
           </div>
+          
           <div className="space-y-4">
             {reservations.length > 0 ? reservations.map(res => {
               const book = getBook(res.bookId);
+              const pickupDays = getDaysDiff(res.expiryDate);
+              const isUrgent = pickupDays <= 1;
+
               return (
-                <div key={res.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex gap-6 items-center hover:shadow-md transition-shadow">
-                  <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center shrink-0 border border-blue-100">
-                    <Icons.Bell />
+                <div key={res.id} className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6 hover:shadow-xl transition-all overflow-hidden relative">
+                  <div className={`absolute top-0 right-0 w-24 h-1 ${isUrgent ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                  
+                  <div className="flex gap-6 items-center">
+                    <div className="shrink-0 relative">
+                      <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center border border-blue-100 group-hover:scale-110 transition-transform">
+                        <Icons.Bell />
+                      </div>
+                      {isUrgent && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-white animate-pulse"></div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-slate-900 truncate text-xl leading-none mb-1.5 tracking-tight group-hover:text-blue-700 transition-colors">
+                        {book?.title}
+                      </h3>
+                      <p className="text-slate-400 text-sm font-bold italic">by {book?.author}</p>
+                    </div>
+
+                    <button className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-black text-slate-900 truncate text-lg tracking-tight leading-none mb-2">{book?.title}</h3>
-                    <div className="flex items-center gap-3">
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pickup Deadline</p>
-                      <span className="text-sm font-bold text-slate-800">{new Date(res.expiryDate).toLocaleDateString()}</span>
+
+                  <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-50">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Reserved On</p>
+                      <p className="text-sm font-bold text-slate-700">{formatDate(res.reservationDate)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pickup Deadline</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-black ${isUrgent ? 'text-amber-600' : 'text-blue-700'}`}>
+                          {formatDate(res.expiryDate)}
+                        </p>
+                        {isUrgent && (
+                          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black uppercase tracking-widest rounded-md">Urgent</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <button className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                  </button>
                 </div>
               );
             }) : (
@@ -288,6 +323,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                   <Icons.Bell />
                 </div>
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No pending holds</p>
+                <p className="text-slate-300 text-[10px] mt-2 max-w-[200px] mx-auto">Reserved items will appear here for tracking pickup deadlines.</p>
               </div>
             )}
           </div>
