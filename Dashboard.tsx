@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, Book, BorrowRecord, Reservation } from './types';
 import { Icons } from './pages/constants';
 import { Link } from 'react-router-dom';
@@ -13,12 +13,13 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservations, onReturn }) => {
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'ALL' | 'RETURNED' | 'ACTIVE'>('ALL');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const getBook = (id: string) => books.find(b => b.id === id);
 
   const activeBorrows = records.filter(r => !r.returnDate);
-  const historyBorrows = records.filter(r => !!r.returnDate).sort((a, b) => 
-    new Date(b.returnDate!).getTime() - new Date(a.returnDate!).getTime()
-  );
 
   const calculateDuration = (start: string, end: string) => {
     const days = Math.floor((new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24));
@@ -43,12 +44,48 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
     });
   };
 
+  const filteredHistory = useMemo(() => {
+    let result = [...records];
+
+    // Filter by Status
+    if (historyStatusFilter === 'RETURNED') {
+      result = result.filter(r => !!r.returnDate);
+    } else if (historyStatusFilter === 'ACTIVE') {
+      result = result.filter(r => !r.returnDate);
+    }
+
+    // Filter by Date Range (Borrow Date)
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      result = result.filter(r => new Date(r.borrowDate) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      result = result.filter(r => new Date(r.borrowDate) <= end);
+    }
+
+    // Sort by most recent borrow date or return date
+    return result.sort((a, b) => {
+      const dateA = a.returnDate ? new Date(a.returnDate).getTime() : new Date(a.borrowDate).getTime();
+      const dateB = b.returnDate ? new Date(b.returnDate).getTime() : new Date(b.borrowDate).getTime();
+      return dateB - dateA;
+    });
+  }, [records, historyStatusFilter, startDate, endDate]);
+
+  const resetFilters = () => {
+    setHistoryStatusFilter('ALL');
+    setStartDate('');
+    setEndDate('');
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-24">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border border-indigo-100">
             Institutional Dashboard
           </div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Welcome, {user.name.split(' ')[0]}</h1>
@@ -58,7 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
           <span className="text-sm font-bold text-slate-700 uppercase tracking-wider">Active Member</span>
           <div className="h-4 w-px bg-slate-200 mx-1"></div>
-          <span className="text-xs font-mono text-slate-400">#{user.id.toUpperCase()}</span>
+          <span className="text-xs font-mono text-slate-400">#{user.id.toUpperCase().slice(0, 8)}</span>
         </div>
       </div>
 
@@ -66,21 +103,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 border border-indigo-100">
               <Icons.BookOpen />
             </div>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">On Loan</p>
             <p className="text-4xl font-black text-slate-900 mt-1">{activeBorrows.length}</p>
           </div>
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6 border border-amber-100">
               <Icons.Bell />
             </div>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Active Holds</p>
             <p className="text-4xl font-black text-slate-900 mt-1">{reservations.length}</p>
           </div>
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 border border-emerald-100">
               <Icons.Settings />
             </div>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Compliance</p>
@@ -90,9 +127,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
 
         {/* Digital Library Card */}
         <div className="lg:col-span-4">
-          <div className="relative group overflow-hidden bg-gradient-to-br from-blue-800 via-blue-900 to-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-200 h-full flex flex-col justify-between">
+          <div className="relative group overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-indigo-200 h-full flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-24 -mt-24 blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/10 rounded-full -ml-24 -mb-24 blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/10 rounded-full -ml-24 -mb-24 blur-3xl"></div>
             
             <div className="relative z-10 flex justify-between items-start">
               <div className="flex items-center gap-3">
@@ -110,7 +147,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
             <div className="relative z-10 flex items-center gap-5 my-8">
               <div className="relative">
                 <img src={user.avatar} className="w-20 h-20 rounded-3xl border-2 border-white/20 shadow-xl object-cover" />
-                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full border-4 border-blue-900"></div>
+                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full border-4 border-indigo-950"></div>
               </div>
               <div>
                 <h2 className="text-xl font-black leading-tight uppercase tracking-tighter">{user.name}</h2>
@@ -146,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Active Loans & Deadlines</h2>
               <p className="text-sm text-slate-500 font-medium">Please return resources on or before the due date.</p>
             </div>
-            <span className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-blue-100">
+            <span className="px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-100">
               {activeBorrows.length} Resources
             </span>
           </div>
@@ -158,7 +195,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
               const isOverdue = daysLeft <= 0;
               const isUrgent = daysLeft > 0 && daysLeft <= 3;
               
-              // Standard borrow period is 14 days
               const progress = isOverdue ? 100 : Math.min(100, Math.max(0, ((14 - daysLeft) / 14) * 100));
 
               return (
@@ -194,7 +230,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                         </span>
                       </div>
 
-                      <h3 className="font-black text-slate-900 truncate text-xl leading-none group-hover:text-blue-700 transition-colors tracking-tight">
+                      <h3 className="font-black text-slate-900 truncate text-xl leading-none group-hover:text-indigo-700 transition-colors tracking-tight">
                         {book?.title}
                       </h3>
                       
@@ -208,14 +244,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
 
                     <button 
                       onClick={() => onReturn(record.bookId)}
-                      className="shrink-0 flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-3xl text-xs font-black uppercase tracking-widest text-white bg-slate-900 hover:bg-blue-700 transition-all active:scale-95 shadow-xl shadow-slate-200"
+                      className="shrink-0 flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-3xl text-xs font-black uppercase tracking-widest text-white bg-slate-900 hover:bg-indigo-700 transition-all active:scale-95 shadow-xl shadow-slate-200"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                       Return
                     </button>
                   </div>
                   
-                  {/* Progress Visualization */}
                   <div className="pt-4 border-t border-slate-50">
                     <div className="flex justify-between items-center mb-3">
                       <div className="flex items-center gap-2">
@@ -230,7 +265,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                       <div 
                         className={`h-full rounded-full transition-all duration-1000 ${
                           isOverdue ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]' : 
-                          isUrgent ? 'bg-amber-400' : 'bg-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.3)]'
+                          isUrgent ? 'bg-amber-400' : 'bg-indigo-600 shadow-[0_0_12px_rgba(79,70,229,0.3)]'
                         }`} 
                         style={{ width: `${progress}%` }}
                       ></div>
@@ -245,7 +280,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                 </div>
                 <h3 className="text-xl font-black text-slate-800 tracking-tight">Your bookshelf is empty</h3>
                 <p className="text-slate-400 font-medium text-sm mt-2 max-w-xs mx-auto">Visit the library catalog to browse and borrow academic materials for your research.</p>
-                <Link to="/" className="mt-8 inline-flex items-center gap-3 px-8 py-4 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-xl shadow-blue-100">
+                <Link to="/" className="mt-8 inline-flex items-center gap-3 px-8 py-4 bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100">
                   Explore Catalog
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </Link>
@@ -274,11 +309,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
 
               return (
                 <div key={res.id} className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6 hover:shadow-xl transition-all overflow-hidden relative">
-                  <div className={`absolute top-0 right-0 w-24 h-1 ${isUrgent ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                  <div className={`absolute top-0 right-0 w-24 h-1 ${isUrgent ? 'bg-amber-500' : 'bg-indigo-500'}`}></div>
                   
                   <div className="flex gap-6 items-center">
                     <div className="shrink-0 relative">
-                      <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center border border-blue-100 group-hover:scale-110 transition-transform">
+                      <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center border border-indigo-100 group-hover:scale-110 transition-transform">
                         <Icons.Bell />
                       </div>
                       {isUrgent && (
@@ -287,7 +322,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-slate-900 truncate text-xl leading-none mb-1.5 tracking-tight group-hover:text-blue-700 transition-colors">
+                      <h3 className="font-black text-slate-900 truncate text-xl leading-none mb-1.5 tracking-tight group-hover:text-indigo-700 transition-colors">
                         {book?.title}
                       </h3>
                       <p className="text-slate-400 text-sm font-bold italic">by {book?.author}</p>
@@ -306,7 +341,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                     <div className="space-y-1">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pickup Deadline</p>
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-black ${isUrgent ? 'text-amber-600' : 'text-blue-700'}`}>
+                        <p className={`text-sm font-black ${isUrgent ? 'text-amber-600' : 'text-indigo-700'}`}>
                           {formatDate(res.expiryDate)}
                         </p>
                         {isUrgent && (
@@ -330,30 +365,78 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
         </section>
       </div>
 
-      {/* READING HISTORY TIMELINE */}
-      <section className="animate-in pt-8 border-t border-slate-100">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 px-2 gap-4">
+      {/* RESEARCH HISTORY WITH FILTERS */}
+      <section className="animate-in pt-8 border-t border-slate-100 space-y-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between px-2 gap-6">
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">Academic Research History</h2>
-            <p className="text-slate-500 mt-2 text-lg font-medium">A chronological record of your scholarly resource usage.</p>
+            <p className="text-slate-500 mt-2 text-lg font-medium">Review and filter your complete resource usage timeline.</p>
           </div>
           <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Records Found</span>
-            <span className="font-black text-blue-700 text-xl leading-none">{historyBorrows.length}</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Records Displayed</span>
+            <span className="font-black text-indigo-700 text-xl leading-none">{filteredHistory.length}</span>
+          </div>
+        </div>
+
+        {/* History Filters Bar */}
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+          <div className="md:col-span-3 space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Return Status</label>
+            <select 
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl focus:border-indigo-600 outline-none text-xs font-bold transition-all appearance-none cursor-pointer"
+              value={historyStatusFilter}
+              onChange={(e) => setHistoryStatusFilter(e.target.value as any)}
+            >
+              <option value="ALL">All Records</option>
+              <option value="RETURNED">Returned Only</option>
+              <option value="ACTIVE">Currently Active</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-3 space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Borrow From</label>
+            <input 
+              type="date"
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl focus:border-indigo-600 outline-none text-xs font-bold transition-all"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+
+          <div className="md:col-span-3 space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Borrow To</label>
+            <input 
+              type="date"
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl focus:border-indigo-600 outline-none text-xs font-bold transition-all"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="md:col-span-3">
+            <button 
+              onClick={resetFilters}
+              className="w-full bg-slate-100 text-slate-500 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset History
+            </button>
           </div>
         </div>
         
-        {historyBorrows.length > 0 ? (
-          <div className="relative">
-            <div className="absolute left-10 md:left-12 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-100 via-slate-100 to-transparent rounded-full"></div>
+        {filteredHistory.length > 0 ? (
+          <div className="relative pb-10">
+            <div className="absolute left-10 md:left-12 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-100 via-slate-100 to-transparent rounded-full"></div>
             
             <div className="space-y-12">
-              {historyBorrows.map((record, index) => {
+              {filteredHistory.map((record, index) => {
                 const book = getBook(record.bookId);
+                const isCurrentlyActive = !record.returnDate;
+                
                 return (
-                  <div key={record.id} className="relative flex gap-8 items-start animate-in" style={{ animationDelay: `${index * 100}ms` }}>
+                  <div key={record.id} className="relative flex gap-8 items-start animate-in" style={{ animationDelay: `${index * 50}ms` }}>
                     <div className="relative z-10 shrink-0 w-20 md:w-24 h-24 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-2xl bg-white border-4 border-blue-50 shadow-lg flex items-center justify-center text-blue-600 ring-4 ring-white">
+                      <div className={`w-12 h-12 rounded-2xl border-4 shadow-lg flex items-center justify-center ring-4 ring-white ${isCurrentlyActive ? 'bg-amber-50 border-amber-100 text-amber-600' : 'bg-white border-indigo-50 text-indigo-600'}`}>
                          <Icons.Library />
                       </div>
                     </div>
@@ -371,12 +454,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                         <div className="flex-1 flex flex-col justify-between">
                           <div>
                             <div className="flex flex-wrap items-center gap-3 mb-3">
-                              <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-sm">
-                                RETURNED SUCCESS
-                              </span>
+                              {isCurrentlyActive ? (
+                                <span className="px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-sm animate-pulse">
+                                  ACTIVE LOAN
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                                  RETURNED SUCCESS
+                                </span>
+                              )}
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ISBN: {book?.isbn}</span>
                             </div>
-                            <h3 className="text-2xl font-black text-slate-900 group-hover:text-blue-700 transition-colors leading-tight tracking-tight">
+                            <h3 className="text-2xl font-black text-slate-900 group-hover:text-indigo-700 transition-colors leading-tight tracking-tight">
                               {book?.title}
                             </h3>
                             <p className="text-slate-500 font-bold text-base mt-1 italic">by {book?.author}</p>
@@ -388,18 +477,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
                               <p className="text-sm font-bold text-slate-700">{formatDate(record.borrowDate)}</p>
                             </div>
                             <div>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Date Returned</p>
-                              <p className="text-sm font-bold text-emerald-600">{formatDate(record.returnDate!)}</p>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Return Status</p>
+                              {record.returnDate ? (
+                                <p className="text-sm font-bold text-emerald-600">{formatDate(record.returnDate)}</p>
+                              ) : (
+                                <p className="text-sm font-bold text-amber-600">Pending Return</p>
+                              )}
                             </div>
                             <div className="hidden md:block">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Duration</p>
-                              <p className="text-sm font-bold text-slate-500">{calculateDuration(record.borrowDate, record.returnDate!)}</p>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Course Unit</p>
+                              <p className="text-sm font-bold text-slate-500 truncate">{book?.course}</p>
                             </div>
                             <div className="flex justify-end items-center">
-                              <Link to="/" className="group/btn inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                Renew Interest
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                              </Link>
+                              {isCurrentlyActive ? (
+                                <button 
+                                  onClick={() => onReturn(record.bookId)}
+                                  className="group/btn inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                                >
+                                  Return Now
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </button>
+                              ) : (
+                                <Link to="/" className="group/btn inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                                  Renew Interest
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </Link>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -415,12 +518,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, books, records, reservation
             <div className="w-24 h-24 bg-slate-50 text-slate-200 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
                <Icons.BookOpen />
             </div>
-            <h3 className="text-2xl font-black text-slate-800 tracking-tight">Your scholarly timeline is empty</h3>
-            <p className="text-slate-500 mt-3 text-lg max-w-sm mx-auto leading-relaxed font-medium">As you borrow and return academic materials, your research history will be mapped here for your reference.</p>
-            <Link to="/" className="mt-12 inline-flex items-center gap-3 px-10 py-5 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-2xl shadow-blue-100 active:scale-95">
-              Begin Exploration
-              <Icons.Search />
-            </Link>
+            <h3 className="text-2xl font-black text-slate-800 tracking-tight">No matching research records</h3>
+            <p className="text-slate-500 mt-3 text-lg max-w-sm mx-auto leading-relaxed font-medium">Try adjusting your filters to view different parts of your academic timeline.</p>
+            <button 
+              onClick={resetFilters}
+              className="mt-12 inline-flex items-center gap-3 px-10 py-5 bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-800 transition-all shadow-2xl shadow-indigo-100 active:scale-95"
+            >
+              Clear Filters
+            </button>
           </div>
         )}
       </section>

@@ -1,6 +1,6 @@
 
 import { supabase, TABLES } from './supabase';
-import { Book, User, BorrowRecord, Reservation, BookStatus, LibraryCard } from '../types';
+import { Book, User, BorrowRecord, Reservation, BookStatus, LibraryCard, UserRole } from '../types';
 
 export const libraryService = {
   /**
@@ -101,5 +101,27 @@ export const libraryService = {
     const { error } = await supabase.from(TABLES.PROFILES).update({ libraryCard: newCard }).eq('id', userId);
     if (error) throw error;
     return newCard;
+  },
+
+  /**
+   * Update user profile details
+   */
+  async updateUserProfile(userId: string, updates: { name: string, department: string, role: UserRole }) {
+    const { error } = await supabase.from(TABLES.PROFILES).update(updates).eq('id', userId);
+    if (error) throw error;
+  },
+
+  /**
+   * Toggle library card status (Active vs Suspended)
+   */
+  async toggleLibraryCardStatus(userId: string, currentCard: LibraryCard) {
+    const updatedCard: LibraryCard = {
+      ...currentCard,
+      status: currentCard.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+    };
+
+    const { error } = await supabase.from(TABLES.PROFILES).update({ libraryCard: updatedCard }).eq('id', userId);
+    if (error) throw error;
+    return updatedCard;
   }
 };

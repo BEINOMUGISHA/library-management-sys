@@ -10,6 +10,7 @@ import Auth from './pages/Auth';
 import LibrarianChat from './components/LibrarianChat';
 import { useLibraryState } from './hooks/useLibraryState';
 import { User, UserRole } from './types';
+import { BORROW_LIMITS } from './pages/constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(() => {
@@ -30,6 +31,27 @@ const App: React.FC = () => {
     setUser(null);
     localStorage.removeItem('bbuc_user');
     navigate('/auth');
+  };
+
+  const activeBorrowsForUser = borrowRecords.filter(r => r.userId === user?.id && !r.returnDate);
+  const borrowLimit = user ? BORROW_LIMITS[user.role] : 0;
+  const canBorrowMore = activeBorrowsForUser.length < borrowLimit;
+
+  const handleBorrow = async (bookId: string) => {
+    if (!user) return;
+    
+    // Check limits for Students and Lecturers
+    if (user.role !== UserRole.ADMIN && !canBorrowMore) {
+      alert(`Institutional Policy: You have reached your borrowing limit of ${borrowLimit} books. Please return an active loan to borrow more resources.`);
+      return;
+    }
+
+    try {
+      await actions.borrow(bookId, user.id);
+    } catch (err) {
+      console.error("Borrow failed:", err);
+      alert("System error during resource allocation. Please try again.");
+    }
   };
 
   if (isLoading) {
@@ -54,7 +76,10 @@ const App: React.FC = () => {
           <Catalog 
             user={user!}
             books={books} 
-            onBorrow={(id) => actions.borrow(id, user!.id)} 
+            canBorrowMore={canBorrowMore}
+            activeBorrowsCount={activeBorrowsForUser.length}
+            borrowLimit={borrowLimit}
+            onBorrow={handleBorrow} 
             onReserve={(id) => actions.reserve(id, user!.id)} 
           />
           <LibrarianChat books={books} />
@@ -85,6 +110,8 @@ const App: React.FC = () => {
               users={users} 
               onIssueCard={actions.issueCard}
               onUpdateBookStatus={actions.updateStatus}
+              onUpdateUser={actions.updateUser}
+              onToggleCardStatus={actions.toggleCardStatus}
             />
           </Layout>
         ) : <Navigate to="/" replace />

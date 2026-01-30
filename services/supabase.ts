@@ -13,11 +13,15 @@ export const TABLES = {
 
 let clientInstance: any;
 
-if (supabaseUrl && supabaseAnonKey) {
+// Flag to check if the database is actually configured via environment
+export const isConfigured = !!(supabaseUrl && supabaseAnonKey);
+
+if (isConfigured) {
   try {
-    clientInstance = createClient(supabaseUrl, supabaseAnonKey);
+    clientInstance = createClient(supabaseUrl!, supabaseAnonKey!);
+    console.log("Supabase: Client initialized successfully.");
   } catch (err) {
-    console.warn("Failed to initialize Supabase client:", err);
+    console.warn("Supabase: Initialization error:", err);
   }
 }
 
