@@ -41,6 +41,11 @@ export interface Book {
   status: BookStatus;
   publishYear: number;
   academicYear: string;
+  // eLibrary Extensions
+  isDigital: boolean;
+  pdfUrl?: string;
+  downloadCount?: number;
+  resourceType: 'EBOOK' | 'JOURNAL' | 'THESIS' | 'PHYSICAL';
 }
 
 export interface BorrowRecord {

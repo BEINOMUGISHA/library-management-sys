@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBUC Library Management System</title>
+  <title>BBUC eLibrary Ecosystem</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,17 +12,29 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f1f5f9; /* Lighter slate for better contrast */
+      background-color: #f8fafc;
       color: #0f172a;
     }
-    .animate-in { animation: animate-in 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes animate-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: animate-in 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes animate-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* Institutional Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
+    .glass {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite linear;
+    }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   </style>
   <script>
     tailwind.config = {
@@ -30,11 +42,15 @@
         extend: {
           colors: {
             bbuc: {
-              navy: '#0f172a',    /* Deep Academic Navy */
-              gold: '#fbbf24',    /* Institutional Accent Gold */
-              action: '#4f46e5',  /* Modern Indigo Primary */
+              navy: '#0f172a',
+              gold: '#fbbf24',
+              action: '#4f46e5',
               muted: '#64748b'
             }
+          },
+          borderRadius: {
+            '4xl': '2.5rem',
+            '5xl': '3.5rem'
           }
         }
       }
