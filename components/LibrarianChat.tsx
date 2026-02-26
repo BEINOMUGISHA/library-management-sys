@@ -49,40 +49,38 @@ const LibrarianChat: React.FC<LibrarianChatProps> = ({ books }) => {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end">
+    <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end">
       {isOpen ? (
-        <div className="bg-white w-[400px] h-[600px] rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
-          <div className="bg-slate-900 p-8 flex items-center justify-between text-white">
+        <div className="bg-[#0a1526] w-[400px] h-[600px] rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-[rgba(201,168,76,0.18)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+          <div className="bg-[#050d1a] p-8 flex items-center justify-between border-b border-[rgba(201,168,76,0.18)]">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-900/40">
-                <Icons.Library />
+              <div className="w-12 h-12 bg-[#c9a84c] rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(201,168,76,0.3)]">
+                <Icons.Library className="text-[#050d1a]" />
               </div>
               <div>
-                <p className="font-black text-lg tracking-tight leading-none uppercase">Research Assistant</p>
+                <p className="font-playfair font-bold text-lg text-[#f5f0e8] leading-none">Research <em className="italic text-[#c9a84c]">Hub.</em></p>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">eLibrary Portal Live</p>
+                  <div className="w-1.5 h-1.5 bg-[#4ade80] rounded-full animate-pulse shadow-[0_0_5px_#4ade80]"></div>
+                  <p className="text-[0.65rem] text-[#f5f0e8]/40 uppercase tracking-widest font-bold">Librarian Online</p>
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-3 rounded-2xl transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </button>
+            <button onClick={() => setIsOpen(false)} className="text-[#f5f0e8]/40 hover:text-[#f5f0e8] transition-colors text-2xl">×</button>
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 bg-[#fcfdfe]">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 bg-[rgba(255,255,255,0.01)]">
             {messages.map((m, i) => (
               <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`max-w-[90%] p-5 rounded-[2rem] text-sm leading-relaxed shadow-sm ${
+                <div className={`max-w-[90%] p-5 rounded-[2rem] text-[0.85rem] leading-relaxed shadow-sm ${
                   m.role === 'user' 
-                    ? 'bg-indigo-700 text-white rounded-tr-none' 
-                    : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'
+                    ? 'bg-[#c9a84c] text-[#050d1a] font-bold rounded-tr-none' 
+                    : 'bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.1)] text-[#f5f0e8] rounded-tl-none'
                 }`}>
                   {m.text}
                 </div>
                 {m.sources && m.sources.length > 0 && (
                   <div className="mt-4 w-full space-y-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Academic Citations</p>
+                    <p className="text-[0.6rem] font-bold text-[#c9a84c] uppercase tracking-[0.2em] ml-2">Academic Citations</p>
                     <div className="grid grid-cols-1 gap-2">
                       {m.sources.map((source, idx) => (
                         <a 
@@ -90,17 +88,14 @@ const LibrarianChat: React.FC<LibrarianChatProps> = ({ books }) => {
                           href={source.uri} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 bg-indigo-50/50 hover:bg-indigo-100/50 border border-indigo-100 rounded-2xl transition-all group"
+                          className="flex items-center gap-3 p-3 bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(201,168,76,0.05)] border border-[rgba(201,168,76,0.1)] rounded-2xl transition-all group"
                         >
-                          <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
-                            <Icons.FileText />
+                          <div className="w-8 h-8 bg-[rgba(201,168,76,0.1)] rounded-xl flex items-center justify-center text-[#c9a84c] shadow-sm shrink-0">
+                            <Icons.FileText size={14} />
                           </div>
                           <div className="truncate">
-                            <p className="text-[10px] font-black text-indigo-900 truncate tracking-tight">{source.title}</p>
-                            <p className="text-[8px] text-indigo-400 truncate mt-0.5">{source.uri}</p>
-                          </div>
-                          <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                            <p className="text-[0.7rem] font-bold text-[#f5f0e8] truncate tracking-tight">{source.title}</p>
+                            <p className="text-[0.6rem] text-[#f5f0e8]/30 truncate mt-0.5">{source.uri}</p>
                           </div>
                         </a>
                       ))}
@@ -111,32 +106,32 @@ const LibrarianChat: React.FC<LibrarianChatProps> = ({ books }) => {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-[2rem] rounded-tl-none">
+                <div className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.1)] p-5 rounded-[2rem] rounded-tl-none">
                   <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 bg-indigo-300 rounded-full animate-bounce"></div>
-                    <div className="w-2.5 h-2.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div className="w-2.5 h-2.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    <div className="w-2 h-2 bg-[#c9a84c] rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-[#c9a84c] rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div className="w-2 h-2 bg-[#c9a84c] rounded-full animate-bounce [animation-delay:0.4s]"></div>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-6 bg-white border-t border-slate-100">
+          <div className="p-6 bg-[#050d1a] border-t border-[rgba(201,168,76,0.18)]">
             <div className="relative group">
               <input 
                 type="text" 
-                placeholder="Search global academic resources..."
-                className="w-full pl-6 pr-14 py-5 bg-slate-50 border-2 border-slate-50 rounded-3xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-600 outline-none transition-all"
+                placeholder="Ask your research assistant..."
+                className="w-full pl-6 pr-14 py-4 bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-2xl text-[0.85rem] text-[#f5f0e8] font-bold focus:border-[#c9a84c] outline-none transition-all"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               />
               <button 
                 onClick={handleSend}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-11 h-11 bg-indigo-700 text-white rounded-2xl flex items-center justify-center hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-200 active:scale-90"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#c9a84c] text-[#050d1a] rounded-xl flex items-center justify-center hover:bg-[#f0c84a] transition-all shadow-xl shadow-[rgba(201,168,76,0.1)] active:scale-90"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
               </button>
             </div>
           </div>
@@ -144,13 +139,13 @@ const LibrarianChat: React.FC<LibrarianChatProps> = ({ books }) => {
       ) : (
         <button 
           onClick={() => setIsOpen(true)}
-          className="bg-slate-900 text-white w-20 h-20 rounded-[2.5rem] shadow-[0_24px_48px_-12px_rgba(15,23,42,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative overflow-hidden"
+          className="bg-[#050d1a] text-[#c9a84c] w-20 h-20 rounded-[2.5rem] shadow-[0_24px_60px_rgba(0,0,0,0.5)] border border-[rgba(201,168,76,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#c9a84c]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative z-10 group-hover:rotate-12 transition-transform scale-125">
-            <Icons.Library />
+            <Icons.Library size={28} />
           </div>
-          <div className="absolute top-3 right-3 w-4 h-4 bg-emerald-500 rounded-full border-4 border-slate-900"></div>
+          <div className="absolute top-4 right-4 w-3 h-3 bg-[#4ade80] rounded-full border-2 border-[#050d1a] shadow-[0_0_10px_#4ade80]"></div>
         </button>
       )}
     </div>

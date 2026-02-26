@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Icons } from './constants';
 import { UserRole, User } from '../types';
 
 interface AuthProps {
@@ -24,12 +23,9 @@ const Auth: React.FC<AuthProps> = ({ onAuthComplete, existingUsers }) => {
 
   const getRoleFromEmail = (email: string): UserRole => {
     const lowerEmail = email.toLowerCase();
-    // Predefined Admin Check
     if (lowerEmail === 'admin@library.bbuc.ac.ug') return UserRole.ADMIN;
-    // Institutional Domain Logic
     if (lowerEmail.endsWith('@student.bbuc.ac.ug')) return UserRole.STUDENT;
     if (lowerEmail.endsWith('@bbuc.ac.ug')) return UserRole.LECTURER;
-    // Default fallback
     return UserRole.STUDENT;
   };
 
@@ -38,8 +34,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthComplete, existingUsers }) => {
     setIsLoading(true);
     setError(null);
 
-    // Simulate Network Latency
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
       if (mode === 'signin') {
@@ -48,9 +43,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthComplete, existingUsers }) => {
         if (found) {
           onAuthComplete(found);
         } else {
-          // Automatic Role Assignment based on Institutional Policy
           const detectedRole = getRoleFromEmail(formData.email);
-          
           onAuthComplete({
             id: 'u-' + Math.random().toString(36).substr(2, 9),
             name: formData.email.split('@')[0].replace('.', ' '),
@@ -61,10 +54,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthComplete, existingUsers }) => {
           });
         }
       } else {
-        // Sign Up Domain Validation
         const detectedRole = getRoleFromEmail(formData.email);
-        
-        // Prevent spoofing via sign-up role selector if email domain contradicts
         const finalRole = detectedRole === UserRole.ADMIN ? UserRole.LECTURER : formData.role;
 
         onAuthComplete({
@@ -88,167 +78,150 @@ const Auth: React.FC<AuthProps> = ({ onAuthComplete, existingUsers }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-      <div className="max-w-md w-full animate-in">
-        <div className="text-center mb-10">
-          <div className="bg-indigo-700 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-200 text-white transform hover:rotate-12 transition-transform">
-            <Icons.Library />
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#050d1a]">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#c9a84c] rounded-full blur-[120px] opacity-[0.08]"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#4f6ef7] rounded-full blur-[120px] opacity-[0.08]"></div>
+
+      <div className="w-full max-w-[440px] bg-[rgba(5,13,26,0.6)] backdrop-blur-[30px] border border-[rgba(201,168,76,0.18)] rounded-[2.5rem] p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in relative z-10">
+        <div className="flex flex-col items-center mb-10">
+          <div className="w-[64px] h-[64px] bg-gradient-to-br from-[#c9a84c] to-[#7a6030] rounded-2xl flex items-center justify-center font-playfair font-black text-2xl text-[#050d1a] shadow-[0_0_30px_rgba(201,168,76,0.3)] mb-6">
+            B
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">BBUC Portal</h1>
-          <p className="text-slate-500 mt-3 font-bold uppercase tracking-widest text-[10px]">Institutional Library Management</p>
+          <h1 className="font-playfair text-[1.8rem] font-bold text-[#f5f0e8] tracking-tight">
+            BBUC <span className="text-[#c9a84c]">Library</span>
+          </h1>
+          <p className="text-[0.82rem] text-[#f5f0e8]/40 mt-2 tracking-widest uppercase">Institutional Access Portal</p>
         </div>
 
-        <div className="bg-white p-8 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100">
-          {/* Mode Switcher */}
-          <div className="flex bg-slate-50 p-1.5 rounded-2xl mb-8 border border-slate-100">
-            <button 
-              onClick={() => setMode('signin')}
-              className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === 'signin' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              Sign In
-            </button>
-            <button 
-              onClick={() => setMode('signup')}
-              className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === 'signup' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              Register
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-xs font-black animate-in">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {error}
-              </div>
-            )}
-
-            {mode === 'signup' && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Icons.User /></span>
-                  <input 
-                    name="name"
-                    type="text" 
-                    required
-                    placeholder="e.g. Samuel Mugisha"
-                    className="w-full pl-11 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-sm font-bold"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Institutional Email</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                </span>
-                <input 
-                  name="email"
-                  type="email" 
-                  required
-                  placeholder="name@bbuc.ac.ug"
-                  className="w-full pl-11 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-sm font-bold"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest ml-1 mt-1">
-                {mode === 'signin' ? 'Role will be detected automatically' : 'Requires @bbuc.ac.ug domain'}
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                </span>
-                <input 
-                  name="password"
-                  type="password" 
-                  required
-                  placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-sm font-bold"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-
-            {mode === 'signup' && (
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Academic Role</label>
-                  <select 
-                    name="role"
-                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-xs font-black uppercase tracking-widest appearance-none cursor-pointer"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                  >
-                    <option value={UserRole.STUDENT}>Student</option>
-                    <option value={UserRole.LECTURER}>Lecturer</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Department</label>
-                  <select 
-                    name="department"
-                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-xs font-black uppercase tracking-widest appearance-none cursor-pointer"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                  >
-                    <option value="IT">IT</option>
-                    <option value="Theology">Theology</option>
-                    <option value="Education">Education</option>
-                    <option value="Business">Business</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            <button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full bg-indigo-700 text-white py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-[0.2em] hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100 mt-6 active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-3"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  {mode === 'signin' ? 'Institutional Log In' : 'Create Record'}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-            <button className="text-[9px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors">Request Admin Help</button>
-            <p className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">v2.4 Restricted</p>
-          </div>
+        {/* Mode Switcher */}
+        <div className="flex bg-[rgba(255,255,255,0.04)] p-1.5 rounded-2xl mb-8 border border-[rgba(201,168,76,0.18)]">
+          <button 
+            onClick={() => setMode('signin')}
+            className={`flex-1 py-3 rounded-xl text-[0.7rem] font-bold uppercase tracking-widest transition-all ${mode === 'signin' ? 'bg-[#c9a84c] text-[#050d1a] shadow-lg' : 'text-[#f5f0e8]/40 hover:text-[#f5f0e8]'}`}
+          >
+            Sign In
+          </button>
+          <button 
+            onClick={() => setMode('signup')}
+            className={`flex-1 py-3 rounded-xl text-[0.7rem] font-bold uppercase tracking-widest transition-all ${mode === 'signup' ? 'bg-[#c9a84c] text-[#050d1a] shadow-lg' : 'text-[#f5f0e8]/40 hover:text-[#f5f0e8]'}`}
+          >
+            Register
+          </button>
         </div>
 
-        {/* Institutional Guidelines */}
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          {[
-            { label: 'Admin', email: 'admin@library.bbuc.ac.ug' },
-            { label: 'Lecturer', email: 'sarah.smith@bbuc.ac.ug' },
-            { label: 'Student', email: 'john.doe@student.bbuc.ac.ug' },
-          ].map((demo) => (
-            <button 
-              key={demo.label}
-              onClick={() => setFormData({ ...formData, email: demo.email })}
-              className="px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-slate-200 hover:border-indigo-400 transition-colors group text-left"
-            >
-              <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{demo.label} Identity</p>
-              <p className="text-[10px] font-bold text-slate-600 group-hover:text-indigo-700">{demo.email}</p>
-            </button>
-          ))}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {error && (
+            <div className="p-4 bg-[rgba(248,113,113,0.1)] border border-[rgba(248,113,113,0.2)] rounded-xl text-[#f87171] text-[0.75rem] font-medium animate-in">
+              {error}
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className="flex flex-col gap-2">
+              <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Full Name</label>
+              <input 
+                name="name"
+                type="text"
+                required
+                placeholder="Enter your full name"
+                className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-4 px-5 text-[0.9rem] text-[#f5f0e8] placeholder-[#f5f0e8]/20 outline-none focus:border-[#c9a84c] focus:bg-[rgba(201,168,76,0.05)] transition-all"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Institutional Email</label>
+            <input 
+              name="email"
+              type="email"
+              required
+              placeholder="name@bbuc.ac.ug"
+              className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-4 px-5 text-[0.9rem] text-[#f5f0e8] placeholder-[#f5f0e8]/20 outline-none focus:border-[#c9a84c] focus:bg-[rgba(201,168,76,0.05)] transition-all"
+              value={formData.email}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Password</label>
+            <input 
+              name="password"
+              type="password"
+              required
+              placeholder="••••••••"
+              className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-4 px-5 text-[0.9rem] text-[#f5f0e8] placeholder-[#f5f0e8]/20 outline-none focus:border-[#c9a84c] focus:bg-[rgba(201,168,76,0.05)] transition-all"
+              value={formData.password}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          {mode === 'signup' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Role</label>
+                <select 
+                  name="role"
+                  className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-4 px-4 text-[0.8rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all appearance-none"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                >
+                  <option value={UserRole.STUDENT}>Student</option>
+                  <option value={UserRole.LECTURER}>Lecturer</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Dept</label>
+                <select 
+                  name="department"
+                  className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-4 px-4 text-[0.8rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all appearance-none"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                >
+                  <option value="IT">IT</option>
+                  <option value="Theology">Theology</option>
+                  <option value="Education">Education</option>
+                  <option value="Business">Business</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          <button 
+            type="submit"
+            disabled={isLoading}
+            className="mt-4 bg-gradient-to-br from-[#c9a84c] to-[#7a6030] text-[#050d1a] py-4 rounded-xl font-bold text-[0.9rem] shadow-[0_10px_30px_rgba(201,168,76,0.25)] hover:shadow-[0_15px_40px_rgba(201,168,76,0.4)] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-[#050d1a]/30 border-t-[#050d1a] rounded-full animate-spin"></div>
+                Authenticating...
+              </>
+            ) : (
+              mode === 'signin' ? 'Sign In to Library' : 'Create Library Account'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-10 flex flex-col items-center gap-4">
+          <p className="text-[0.7rem] text-[#f5f0e8]/25 tracking-widest uppercase">Quick Access Identities</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {[
+              { label: 'Admin', email: 'admin@library.bbuc.ac.ug' },
+              { label: 'Lecturer', email: 'sarah.smith@bbuc.ac.ug' },
+              { label: 'Student', email: 'john.doe@student.bbuc.ac.ug' },
+            ].map((demo) => (
+              <button 
+                key={demo.label}
+                onClick={() => setFormData({ ...formData, email: demo.email })}
+                className="px-3 py-1.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.1)] rounded-lg text-[0.65rem] text-[#f5f0e8]/40 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all"
+              >
+                {demo.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

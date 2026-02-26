@@ -56,9 +56,9 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-        <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] animate-pulse">BBUC Cloud Syncing...</p>
+      <div className="min-h-screen bg-[#050d1a] flex flex-col items-center justify-center p-6">
+        <div className="w-16 h-16 border-4 border-[rgba(201,168,76,0.1)] border-t-[#c9a84c] rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(201,168,76,0.2)]"></div>
+        <p className="text-[#c9a84c] font-bold uppercase tracking-[0.3em] text-[0.7rem] animate-pulse">BBUC Cloud Syncing...</p>
       </div>
     );
   }

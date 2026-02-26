@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Icons, ACADEMIC_YEAR_CONFIG } from '../pages/constants';
 import { User, UserRole } from '../types';
 
@@ -11,92 +11,100 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
+  const navigate = useNavigate();
   const navigation = [
-    { name: 'Digital Catalog', href: '/', icon: Icons.BookOpen, roles: [UserRole.STUDENT, UserRole.LECTURER, UserRole.ADMIN] },
-    { name: 'Academic Calendar', href: '/calendar', icon: Icons.Calendar, roles: [UserRole.STUDENT, UserRole.LECTURER, UserRole.ADMIN] },
-    { name: 'My Activity', href: '/dashboard', icon: Icons.Dashboard, roles: [UserRole.STUDENT, UserRole.LECTURER] },
-    { name: 'Administration', href: '/admin', icon: Icons.Settings, roles: [UserRole.ADMIN] },
+    { name: 'Dashboard', href: '/dashboard', icon: '⊞', roles: [UserRole.STUDENT, UserRole.LECTURER] },
+    { name: 'Catalog', href: '/', icon: '📚', roles: [UserRole.STUDENT, UserRole.LECTURER, UserRole.ADMIN] },
+    { name: 'Administration', href: '/admin', icon: '⚙', roles: [UserRole.ADMIN] },
+    { name: 'Academic Calendar', href: '/calendar', icon: '📅', roles: [UserRole.STUDENT, UserRole.LECTURER, UserRole.ADMIN] },
   ];
 
   const filteredNav = navigation.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden font-inter">
-      <aside className={`bg-slate-900 border-r border-slate-800 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col shadow-2xl z-50`}>
-        <div className="p-8 flex items-center gap-4">
-          <div className="text-amber-400">
-            <Icons.Library />
+    <div className="flex flex-col min-h-screen bg-[#050d1a] text-[#f5f0e8] font-sans font-light relative">
+      {/* NAVBAR */}
+      <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-12 h-[72px] bg-[rgba(5,13,26,0.85)] backdrop-blur-[20px] border-b border-[rgba(201,168,76,0.18)]">
+        <div className="flex items-center gap-3.5 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="w-[38px] h-[38px] bg-gradient-to-br from-[#c9a84c] to-[#7a6030] rounded-lg flex items-center justify-center font-playfair font-black text-base text-[#050d1a] shadow-[0_0_20px_rgba(201,168,76,0.35)]">
+            B
           </div>
-          {isSidebarOpen && (
-            <div className="flex flex-col">
-              <span className="font-black text-lg text-white tracking-tighter leading-none">BBUC eLIBRARY</span>
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1">Digital Knowledge Hub</span>
-            </div>
-          )}
+          <div className="font-playfair text-[1.1rem] font-bold tracking-wider text-[#f5f0e8]">
+            BBUC <span className="text-[#c9a84c]">Library</span>
+          </div>
         </div>
 
-        <nav className="flex-1 px-4 py-8 space-y-3">
+        <div className="hidden md:flex items-center gap-10">
           {filteredNav.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
               className={({ isActive }) =>
-                `flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all ${
-                  isActive 
-                    ? 'bg-indigo-600 text-white font-bold shadow-xl shadow-indigo-950/40' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                `text-[0.82rem] font-normal tracking-widest uppercase transition-colors border-b border-transparent pb-0.5 ${
+                  isActive ? 'text-[#c9a84c] border-[#c9a84c]' : 'text-[#f5f0e8]/55 hover:text-[#c9a84c]'
                 }`
               }
             >
-              <item.icon />
-              {isSidebarOpen && <span className="text-sm tracking-tight">{item.name}</span>}
+              {item.name}
             </NavLink>
           ))}
-        </nav>
-
-        <div className="p-4 border-t border-slate-800">
-          <button 
-            onClick={onLogout}
-            className="flex w-full items-center gap-4 px-5 py-3.5 rounded-2xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all group"
-          >
-            <Icons.LogOut />
-            {isSidebarOpen && <span className="text-sm font-bold">Sign Out</span>}
-          </button>
         </div>
-      </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shadow-sm z-40">
-          <div className="flex items-center gap-8">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-3 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-xl transition-colors"
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <div className="w-[7px] h-[7px] rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80] animate-pulse"></div>
+            <div className="text-[0.75rem] text-[#4ade80] tracking-wider">Live · Supabase</div>
+          </div>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#4f6ef7] to-[#7a6030] border-[1.5px] border-[#7a6030] flex items-center justify-center text-[0.8rem] font-medium text-[#f5f0e8] cursor-pointer">
+            {user?.name.split(' ').map(n => n[0]).join('')}
+          </div>
+        </div>
+      </nav>
+
+      <div className="flex flex-1 pt-[72px]">
+        {/* SIDEBAR */}
+        <aside className="w-[240px] shrink-0 p-10 flex flex-col gap-1.5 border-r border-[rgba(201,168,76,0.18)] bg-[rgba(5,13,26,0.4)]">
+          <div className="text-[0.65rem] tracking-[0.15em] uppercase text-[#7a6030] mt-6 mb-2 px-3">Navigation</div>
+          {filteredNav.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              className={({ isActive }) =>
+                `flex items-center gap-3.5 px-3 py-2.5 rounded-lg transition-all text-[0.88rem] ${
+                  isActive 
+                    ? 'bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(79,110,247,0.08)] text-[#c9a84c] border border-[rgba(201,168,76,0.2)] shadow-[inset_0_0_20px_rgba(201,168,76,0.05)]' 
+                    : 'text-[#f5f0e8]/55 hover:bg-[rgba(245,240,232,0.08)] hover:text-[#f5f0e8]'
+                }`
+              }
             >
-              <Icons.Plus />
-            </button>
-            <div className="hidden lg:flex items-center gap-4 bg-indigo-50 px-6 py-2 rounded-2xl border border-indigo-100">
-              <span className="text-sm font-black text-indigo-900 tracking-tight">{ACADEMIC_YEAR_CONFIG.year} Semester Portal</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-black text-slate-900 leading-none">{user?.name}</p>
-                <p className="text-[9px] text-indigo-600 uppercase font-black tracking-widest mt-1.5">{user?.role} Portal</p>
-              </div>
-              <img 
-                src={user?.avatar} 
-                alt="Profile" 
-                className="w-11 h-11 rounded-2xl border-2 border-white shadow-md ring-1 ring-slate-100 object-cover cursor-pointer hover:scale-105 transition-transform"
-              />
-            </div>
-          </div>
-        </header>
+              <span className="text-base w-5 text-center">{item.icon}</span>
+              {item.name}
+            </NavLink>
+          ))}
 
-        <main className="flex-1 overflow-y-auto p-10 bg-[#f8fafc]">
+          <div className="text-[0.65rem] tracking-[0.15em] uppercase text-[#7a6030] mt-6 mb-2 px-3">Collections</div>
+          <div className="flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-[#f5f0e8]/55 hover:bg-[rgba(245,240,232,0.08)] hover:text-[#f5f0e8] cursor-pointer transition-all text-[0.88rem]">
+            <span className="text-base w-5 text-center">📕</span> Physical Books
+          </div>
+          <div className="flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-[#f5f0e8]/55 hover:bg-[rgba(245,240,232,0.08)] hover:text-[#f5f0e8] cursor-pointer transition-all text-[0.88rem]">
+            <span className="text-base w-5 text-center">💻</span> E-Books
+          </div>
+          <div className="flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-[#f5f0e8]/55 hover:bg-[rgba(245,240,232,0.08)] hover:text-[#f5f0e8] cursor-pointer transition-all text-[0.88rem]">
+            <span className="text-base w-5 text-center">📄</span> Journals
+          </div>
+
+          <div className="mt-auto pt-6 border-t border-[rgba(201,168,76,0.18)]">
+            <button 
+              onClick={onLogout}
+              className="flex w-full items-center gap-3.5 px-3 py-2.5 rounded-lg text-[#f5f0e8]/55 hover:bg-red-500/10 hover:text-red-400 transition-all text-[0.88rem]"
+            >
+              <span className="text-base w-5 text-center">⎋</span> Sign Out
+            </button>
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT */}
+        <main className="flex-1 p-12 flex flex-col gap-8 overflow-y-auto relative z-10">
           {children}
         </main>
       </div>

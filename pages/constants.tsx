@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Book, User, UserRole, BookStatus, AcademicEvent } from '../types';
+import { Book, User, UserRole, BookStatus, AcademicEvent, ResourceType } from '../types';
 
 export const ACADEMIC_YEAR_CONFIG = {
   year: '2024/2025',
@@ -35,7 +35,7 @@ export const MOCK_BOOKS: Book[] = [
     publishYear: 2008, 
     academicYear: 'Year 1',
     isDigital: true,
-    resourceType: 'EBOOK',
+    resourceType: ResourceType.EBOOK,
     pdfUrl: '#'
   },
   { 
@@ -52,7 +52,7 @@ export const MOCK_BOOKS: Book[] = [
     publishYear: 2020, 
     academicYear: 'Year 3',
     isDigital: true,
-    resourceType: 'EBOOK',
+    resourceType: ResourceType.EBOOK,
     pdfUrl: '#'
   },
   // --- Physical Resources (Theology) ---
@@ -70,7 +70,7 @@ export const MOCK_BOOKS: Book[] = [
     publishYear: 1994, 
     academicYear: 'Year 1',
     isDigital: false,
-    resourceType: 'PHYSICAL'
+    resourceType: ResourceType.PHYSICAL
   },
   // --- Digital Journals ---
   { 
@@ -87,7 +87,7 @@ export const MOCK_BOOKS: Book[] = [
     publishYear: 2024, 
     academicYear: 'All Years',
     isDigital: true,
-    resourceType: 'JOURNAL',
+    resourceType: ResourceType.JOURNAL,
     pdfUrl: '#'
   },
   { 
@@ -104,7 +104,7 @@ export const MOCK_BOOKS: Book[] = [
     publishYear: 2023, 
     academicYear: 'Year 1',
     isDigital: true,
-    resourceType: 'EBOOK'
+    resourceType: ResourceType.EBOOK
   },
   { 
     id: 'sw1', 
@@ -120,7 +120,7 @@ export const MOCK_BOOKS: Book[] = [
     publishYear: 2022, 
     academicYear: 'Year 1',
     isDigital: true,
-    resourceType: 'EBOOK'
+    resourceType: ResourceType.EBOOK
   }
 ];
 

@@ -28,6 +28,13 @@ export interface User {
   libraryCard?: LibraryCard;
 }
 
+export enum ResourceType {
+  EBOOK = 'EBOOK',
+  JOURNAL = 'JOURNAL',
+  THESIS = 'THESIS',
+  PHYSICAL = 'PHYSICAL'
+}
+
 export interface Book {
   id: string;
   title: string;
@@ -45,7 +52,7 @@ export interface Book {
   isDigital: boolean;
   pdfUrl?: string;
   downloadCount?: number;
-  resourceType: 'EBOOK' | 'JOURNAL' | 'THESIS' | 'PHYSICAL';
+  resourceType: ResourceType;
 }
 
 export interface BorrowRecord {
