@@ -4,12 +4,14 @@ import { Book, BorrowRecord, User, BookStatus, UserRole, LibraryCard } from '../
 import { Icons } from '../pages/constants';
 import { isConfigured } from '../services/supabase';
 
+import { NotificationProvider, useNotification } from './Notification';
+
 interface AdminDashboardProps {
   books: Book[];
   records: BorrowRecord[];
   users: User[];
   onIssueCard: (userId: string) => Promise<any>;
-  onUpdateBookStatus: (bookId: string, newStatus: BookStatus) => void;
+  onUpdateBookStatus: (bookId: string, newStatus: BookStatus) => Promise<void>;
   onUpdateUser?: (userId: string, updates: { name: string, department: string, role: UserRole }) => Promise<void>;
   onToggleCardStatus?: (userId: string, currentCard: LibraryCard) => Promise<any>;
 }
@@ -23,19 +25,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateUser,
   onToggleCardStatus
 }) => {
+  const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState<'books' | 'users'>('books');
   const [issuingId, setIssuingId] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [updatingBookId, setUpdatingBookId] = useState<string | null>(null);
   
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', department: '', role: UserRole.STUDENT });
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleToggleStatus = (book: Book) => {
+  const handleToggleStatus = async (book: Book) => {
+    if (updatingBookId) return;
     const nextStatus = book.status === BookStatus.AVAILABLE 
       ? BookStatus.BORROWED 
       : BookStatus.AVAILABLE;
-    onUpdateBookStatus(book.id, nextStatus);
+    
+    setUpdatingBookId(book.id);
+    try {
+      await onUpdateBookStatus(book.id, nextStatus);
+    } catch (err) {
+      // Error handled in App.tsx
+    } finally {
+      setUpdatingBookId(null);
+    }
   };
 
   const handleIssueCard = async (userId: string) => {
@@ -45,7 +58,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setSuccessId(userId);
       setTimeout(() => setSuccessId(null), 3000);
     } catch (err) {
-      console.error("Failed to issue card:", err);
+      // Error notification is handled by the parent callback in App.tsx
+      // but we still need to catch it to stop the loading state.
     } finally {
       setIssuingId(null);
     }
@@ -68,7 +82,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await onUpdateUser(editingUser.id, editFormData);
       setEditingUser(null);
     } catch (err) {
-      console.error("Update failed:", err);
+      // Error notification is handled by the parent callback in App.tsx
     } finally {
       setIsUpdating(false);
     }
@@ -79,7 +93,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       await onToggleCardStatus(userId, card);
     } catch (err) {
-      console.error("Card status toggle failed:", err);
+      // Error notification is handled by the parent callback in App.tsx
     }
   };
 
@@ -157,17 +171,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <button 
-                        onClick={() => handleToggleStatus(book)}
-                        disabled={book.status === BookStatus.RESERVED}
-                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none active:scale-95 disabled:opacity-30 ${
-                          book.status === BookStatus.AVAILABLE ? 'bg-[#4ade80]' : 'bg-[#f5f0e8]/10'
-                        }`}
-                      >
-                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          book.status === BookStatus.AVAILABLE ? 'translate-x-5' : 'translate-x-0'
-                        }`} />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => handleToggleStatus(book)}
+                          disabled={book.status === BookStatus.RESERVED || updatingBookId === book.id}
+                          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none active:scale-95 disabled:opacity-30 ${
+                            book.status === BookStatus.AVAILABLE ? 'bg-[#4ade80]' : 'bg-[#f5f0e8]/10'
+                          }`}
+                        >
+                          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            book.status === BookStatus.AVAILABLE ? 'translate-x-5' : 'translate-x-0'
+                          } ${updatingBookId === book.id ? 'animate-pulse scale-75' : ''}`} />
+                        </button>
+                        {updatingBookId === book.id && (
+                          <div className="w-3 h-3 border-2 border-[#c9a84c]/30 border-t-[#c9a84c] rounded-full animate-spin"></div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-widest border ${

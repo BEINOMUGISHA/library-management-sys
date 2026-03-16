@@ -12,7 +12,9 @@ import { useLibraryState } from './hooks/useLibraryState';
 import { User, UserRole } from './types';
 import { BORROW_LIMITS } from './pages/constants';
 
-const App: React.FC = () => {
+import { NotificationProvider, useNotification } from './components/Notification';
+
+const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('bbuc_user');
     return saved ? JSON.parse(saved) : null;
@@ -20,16 +22,19 @@ const App: React.FC = () => {
   
   const navigate = useNavigate();
   const { books, users, borrowRecords, reservations, isLoading, actions } = useLibraryState();
+  const { showNotification } = useNotification();
 
   const handleAuthComplete = (selectedUser: User) => {
     setUser(selectedUser);
     localStorage.setItem('bbuc_user', JSON.stringify(selectedUser));
+    showNotification(`Welcome back, ${selectedUser.name}`, 'success', 'Authentication Success');
     navigate('/');
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('bbuc_user');
+    showNotification('You have been securely logged out.', 'info', 'Session Ended');
     navigate('/auth');
   };
 
@@ -42,15 +47,40 @@ const App: React.FC = () => {
     
     // Check limits for Students and Lecturers
     if (user.role !== UserRole.ADMIN && !canBorrowMore) {
-      alert(`Institutional Policy: You have reached your borrowing limit of ${borrowLimit} books. Please return an active loan to borrow more resources.`);
+      showNotification(
+        `Institutional Policy: You have reached your borrowing limit of ${borrowLimit} books. Please return an active loan to borrow more resources.`,
+        'warning',
+        'Borrowing Limit'
+      );
       return;
     }
 
     try {
       await actions.borrow(bookId, user.id);
+      showNotification('Resource successfully allocated to your account.', 'success', 'Borrow Success');
     } catch (err) {
       console.error("Borrow failed:", err);
-      alert("System error during resource allocation. Please try again.");
+      showNotification("System error during resource allocation. Please try again.", 'error', 'System Error');
+    }
+  };
+
+  const handleReserve = async (bookId: string) => {
+    if (!user) return;
+    try {
+      await actions.reserve(bookId, user.id);
+      showNotification('Title reserved. You will be notified when it becomes available.', 'success', 'Reservation Success');
+    } catch (err) {
+      showNotification('Failed to reserve title. Please try again.', 'error', 'System Error');
+    }
+  };
+
+  const handleReturn = async (recordId: string) => {
+    if (!user) return;
+    try {
+      await actions.return(recordId, user.id);
+      showNotification('Resource successfully returned to the collection.', 'success', 'Return Success');
+    } catch (err) {
+      showNotification('Failed to process return. Please contact a librarian.', 'error', 'System Error');
     }
   };
 
@@ -80,7 +110,7 @@ const App: React.FC = () => {
             activeBorrowsCount={activeBorrowsForUser.length}
             borrowLimit={borrowLimit}
             onBorrow={handleBorrow} 
-            onReserve={(id) => actions.reserve(id, user!.id)} 
+            onReserve={handleReserve} 
           />
           <LibrarianChat books={books} />
         </Layout>
@@ -97,7 +127,7 @@ const App: React.FC = () => {
             books={books} 
             records={borrowRecords.filter(r => r.userId === user?.id)}
             reservations={reservations.filter(res => res.userId === user?.id)}
-            onReturn={(id) => actions.return(id, user!.id)}
+            onReturn={handleReturn}
           />
         </Layout>
       } />
@@ -108,10 +138,38 @@ const App: React.FC = () => {
               books={books} 
               records={borrowRecords} 
               users={users} 
-              onIssueCard={actions.issueCard}
-              onUpdateBookStatus={actions.updateStatus}
-              onUpdateUser={actions.updateUser}
-              onToggleCardStatus={actions.toggleCardStatus}
+              onIssueCard={async (userId) => {
+                try {
+                  await actions.issueCard(userId);
+                  showNotification('Library ID card successfully issued.', 'success', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to issue library card. Please try again.', 'error', 'Admin Error');
+                }
+              }}
+              onUpdateBookStatus={async (bookId, status) => {
+                try {
+                  await actions.updateStatus(bookId, status);
+                  showNotification(`Book status updated to ${status}.`, 'info', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to update book status.', 'error', 'Admin Error');
+                }
+              }}
+              onUpdateUser={async (userId, updates) => {
+                try {
+                  await actions.updateUser(userId, updates);
+                  showNotification('User profile successfully updated.', 'success', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to update user profile.', 'error', 'Admin Error');
+                }
+              }}
+              onToggleCardStatus={async (userId, card) => {
+                try {
+                  await actions.toggleCardStatus(userId, card);
+                  showNotification('ID card status toggled.', 'info', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to toggle card status.', 'error', 'Admin Error');
+                }
+              }}
             />
           </Layout>
         ) : <Navigate to="/" replace />
@@ -119,5 +177,14 @@ const App: React.FC = () => {
     </Routes>
   );
 };
+
+const App: React.FC = () => {
+  return (
+    <NotificationProvider>
+      <AppContent />
+    </NotificationProvider>
+  );
+};
+
 
 export default App;

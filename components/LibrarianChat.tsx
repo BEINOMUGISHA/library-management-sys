@@ -4,6 +4,8 @@ import { Icons } from '../pages/constants';
 import { Book } from '../types';
 import { askLibrarian, ResearchResponse } from '../services/geminiService';
 
+import { NotificationProvider, useNotification } from './Notification';
+
 interface Message {
   role: 'user' | 'ai';
   text: string;
@@ -15,6 +17,7 @@ interface LibrarianChatProps {
 }
 
 const LibrarianChat: React.FC<LibrarianChatProps> = ({ books }) => {
+  const { showNotification } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'ai', text: "Welcome to the BBUC eLibrary Research Hub! I can help you search our catalog or find global academic resources. What are you researching today?" }
@@ -37,15 +40,21 @@ const LibrarianChat: React.FC<LibrarianChatProps> = ({ books }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
-    const context = books.map(b => `${b.title} by ${b.author} (${b.category})`).join(', ');
-    const aiResponse: ResearchResponse = await askLibrarian(userMsg, context);
-    
-    setMessages(prev => [...prev, { 
-      role: 'ai', 
-      text: aiResponse.text,
-      sources: aiResponse.sources
-    }]);
-    setIsLoading(false);
+    try {
+      const context = books.map(b => `${b.title} by ${b.author} (${b.category})`).join(', ');
+      const aiResponse: ResearchResponse = await askLibrarian(userMsg, context);
+      
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: aiResponse.text,
+        sources: aiResponse.sources
+      }]);
+    } catch (err) {
+      console.error("Chat failed:", err);
+      showNotification("Failed to connect to the research assistant. Please try again later.", 'error', 'Connection Error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
