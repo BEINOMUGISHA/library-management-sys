@@ -2,6 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { Book, User, ResourceType } from '../types';
 import { Icons } from './constants';
+import { searchService } from '../services/searchService';
+import { notificationService } from '../services/notificationService';
 
 interface CatalogProps {
   user: User;
@@ -15,15 +17,37 @@ interface CatalogProps {
 
 const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBorrowsCount, borrowLimit, onBorrow, onReserve }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSmartSearching, setIsSmartSearching] = useState(false);
+  const [smartResults, setSmartResults] = useState<Book[] | null>(null);
   const [selectedType, setSelectedType] = useState<ResourceType | 'ALL'>('ALL');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [notifyingIds, setNotifyingIds] = useState<Set<string>>(new Set());
 
   const categories = useMemo(() => {
     const cats = new Set(books.map(b => b.category));
     return ['ALL', ...Array.from(cats)];
   }, [books]);
 
+  const handleSmartSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSmartSearching(true);
+    const results = await searchService.smartSearch(searchQuery, books);
+    setSmartResults(results);
+    setIsSmartSearching(false);
+  };
+
+  const handleNotifyMe = async (bookId: string) => {
+    try {
+      await notificationService.subscribeToAvailability(user.id, bookId);
+      setNotifyingIds(prev => new Set(prev).add(bookId));
+    } catch (err) {
+      console.error('Notify me error:', err);
+    }
+  };
+
   const filteredBooks = useMemo(() => {
+    if (smartResults) return smartResults;
+
     return books.filter(book => {
       const matchesSearch = 
         book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,7 +59,7 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBor
 
       return matchesSearch && matchesType && matchesCategory;
     });
-  }, [books, searchQuery, selectedType, selectedCategory]);
+  }, [books, searchQuery, selectedType, selectedCategory, smartResults]);
 
   return (
     <div className="flex flex-col gap-10 animate-in">
@@ -65,12 +89,22 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBor
           <input 
             type="text"
             placeholder="Search by Title, Author, or ISBN..."
-            className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-2xl py-6 pl-16 pr-8 text-[1.1rem] text-[#f5f0e8] placeholder-[#f5f0e8]/25 outline-none focus:border-[#c9a84c] focus:bg-[rgba(201,168,76,0.05)] transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.2)]"
+            className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-2xl py-6 pl-16 pr-40 text-[1.1rem] text-[#f5f0e8] placeholder-[#f5f0e8]/25 outline-none focus:border-[#c9a84c] focus:bg-[rgba(201,168,76,0.05)] transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.2)]"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (smartResults) setSmartResults(null);
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSmartSearch()}
           />
-          <div className="absolute inset-y-0 right-6 flex items-center gap-2">
-            <span className="text-[0.65rem] text-[#f5f0e8]/25 tracking-widest uppercase border border-[rgba(245,240,232,0.1)] px-2 py-1 rounded">⌘ K</span>
+          <div className="absolute inset-y-0 right-4 flex items-center gap-2">
+            <button 
+              onClick={handleSmartSearch}
+              disabled={isSmartSearching || !searchQuery.trim()}
+              className="px-4 py-2 bg-gradient-to-br from-[#c9a84c] to-[#7a6030] text-[#050d1a] rounded-xl text-[0.75rem] font-bold uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+            >
+              {isSmartSearching ? '...' : 'AI Search'}
+            </button>
           </div>
         </div>
 
@@ -157,12 +191,23 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBor
                       Borrow
                     </button>
                   ) : (
-                    <button 
-                      onClick={() => onReserve(book.id)}
-                      className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] text-[#f5f0e8]/55 px-4 py-2 rounded-lg text-[0.78rem] font-bold hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all active:scale-95"
-                    >
-                      Reserve
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => onReserve(book.id)}
+                        className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] text-[#f5f0e8]/55 px-4 py-2 rounded-lg text-[0.78rem] font-bold hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all active:scale-95"
+                      >
+                        Reserve
+                      </button>
+                      {!notifyingIds.has(book.id) && (
+                        <button 
+                          onClick={() => handleNotifyMe(book.id)}
+                          className="bg-[rgba(201,168,76,0.1)] border border-[rgba(201,168,76,0.2)] text-[#c9a84c] px-3 py-2 rounded-lg text-[0.78rem] font-bold hover:bg-[rgba(201,168,76,0.2)] transition-all"
+                          title="Notify me when available"
+                        >
+                          🔔
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

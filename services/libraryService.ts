@@ -1,6 +1,7 @@
 
 import { supabase, TABLES } from './supabase';
 import { Book, User, BorrowRecord, Reservation, BookStatus, LibraryCard, UserRole } from '../types';
+import { notificationService } from './notificationService';
 
 export const libraryService = {
   /**
@@ -30,7 +31,9 @@ export const libraryService = {
       bookId,
       userId,
       borrowDate: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      renewalCount: 0,
+      fineAmount: 0
     };
 
     const { error: recordError } = await supabase.from(TABLES.BORROW_RECORDS).insert(newRecord);
@@ -46,6 +49,9 @@ export const libraryService = {
   async returnBook(bookId: string, userId: string) {
     const returnDate = new Date().toISOString();
     
+    // Get book title for notification
+    const { data: bookData } = await supabase.from(TABLES.BOOKS).select('title').eq('id', bookId).single();
+
     const { error: recordError } = await supabase.from(TABLES.BORROW_RECORDS)
       .update({ returnDate })
       .eq('bookId', bookId)
@@ -56,6 +62,11 @@ export const libraryService = {
 
     const { error: bookError } = await supabase.from(TABLES.BOOKS).update({ status: BookStatus.AVAILABLE }).eq('id', bookId);
     if (bookError) throw bookError;
+
+    // Trigger availability notifications
+    if (bookData) {
+      await notificationService.handleBookReturned(bookId, bookData.title);
+    }
   },
 
   /**
@@ -81,6 +92,32 @@ export const libraryService = {
    */
   async updateBookStatus(bookId: string, status: BookStatus) {
     const { error } = await supabase.from(TABLES.BOOKS).update({ status }).eq('id', bookId);
+    if (error) throw error;
+  },
+
+  /**
+   * Add a new book to the catalog
+   */
+  async addBook(book: Omit<Book, 'id'>) {
+    const { data, error } = await supabase.from(TABLES.BOOKS).insert(book).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update book details
+   */
+  async updateBook(bookId: string, updates: Partial<Book>) {
+    const { data, error } = await supabase.from(TABLES.BOOKS).update(updates).eq('id', bookId).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Delete a book from the catalog
+   */
+  async deleteBook(bookId: string) {
+    const { error } = await supabase.from(TABLES.BOOKS).delete().eq('id', bookId);
     if (error) throw error;
   },
 
@@ -123,5 +160,37 @@ export const libraryService = {
     const { error } = await supabase.from(TABLES.PROFILES).update({ libraryCard: updatedCard }).eq('id', userId);
     if (error) throw error;
     return updatedCard;
+  },
+
+  /**
+   * Renew a borrowed resource
+   */
+  async renewBook(recordId: string, currentDueDate: string, currentRenewalCount: number) {
+    const newDueDate = new Date(new Date(currentDueDate).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { error } = await supabase.from(TABLES.BORROW_RECORDS)
+      .update({ 
+        dueDate: newDueDate,
+        renewalCount: currentRenewalCount + 1 
+      })
+      .eq('id', recordId);
+    
+    if (error) throw error;
+  },
+
+  /**
+   * Calculate fines for overdue records (Mock logic for UI display)
+   * In a real system, this would be a database function or scheduled task
+   */
+  calculateFine(dueDate: string, returnDate?: string): number {
+    const end = returnDate ? new Date(returnDate) : new Date();
+    const due = new Date(dueDate);
+    
+    if (end <= due) return 0;
+    
+    const diffTime = end.getTime() - due.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // 500 UGX per day fine
+    return diffDays * 500;
   }
 };

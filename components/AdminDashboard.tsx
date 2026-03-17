@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Book, BorrowRecord, User, BookStatus, UserRole, LibraryCard } from '../types';
+import { Book, BorrowRecord, User, BookStatus, UserRole, LibraryCard, ResourceType } from '../types';
 import { Icons } from '../pages/constants';
 import { isConfigured } from '../services/supabase';
+import { libraryService } from '../services/libraryService';
 
 import { NotificationProvider, useNotification } from './Notification';
 
@@ -14,6 +15,11 @@ interface AdminDashboardProps {
   onUpdateBookStatus: (bookId: string, newStatus: BookStatus) => Promise<void>;
   onUpdateUser?: (userId: string, updates: { name: string, department: string, role: UserRole }) => Promise<void>;
   onToggleCardStatus?: (userId: string, currentCard: LibraryCard) => Promise<any>;
+  onReturn?: (bookId: string, userId: string) => Promise<void>;
+  onRenew?: (recordId: string, dueDate: string, renewalCount: number) => Promise<void>;
+  onAddBook?: (book: Omit<Book, 'id'>) => Promise<void>;
+  onUpdateBook?: (bookId: string, updates: Partial<Book>) => Promise<void>;
+  onDeleteBook?: (bookId: string) => Promise<void>;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
@@ -23,16 +29,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onIssueCard, 
   onUpdateBookStatus,
   onUpdateUser,
-  onToggleCardStatus
+  onToggleCardStatus,
+  onReturn,
+  onRenew,
+  onAddBook,
+  onUpdateBook,
+  onDeleteBook
 }) => {
   const { showNotification } = useNotification();
-  const [activeTab, setActiveTab] = useState<'books' | 'users'>('books');
+  const [activeTab, setActiveTab] = useState<'books' | 'users' | 'circulation'>('books');
   const [issuingId, setIssuingId] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [updatingBookId, setUpdatingBookId] = useState<string | null>(null);
   
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', department: '', role: UserRole.STUDENT });
+  
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [isAddingBook, setIsAddingBook] = useState(false);
+  const [bookFormData, setBookFormData] = useState<Omit<Book, 'id'>>({
+    title: '',
+    author: '',
+    isbn: '',
+    category: 'General',
+    department: 'IT',
+    course: 'General',
+    coverUrl: 'https://picsum.photos/seed/book/400/600',
+    description: '',
+    status: BookStatus.AVAILABLE,
+    publishYear: new Date().getFullYear(),
+    academicYear: '2023/2024',
+    isDigital: false,
+    resourceType: ResourceType.PHYSICAL
+  });
+
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleToggleStatus = async (book: Book) => {
@@ -97,6 +127,73 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const startAddBook = () => {
+    setBookFormData({
+      title: '',
+      author: '',
+      isbn: '',
+      category: 'General',
+      department: 'IT',
+      course: 'General',
+      coverUrl: 'https://picsum.photos/seed/book/400/600',
+      description: '',
+      status: BookStatus.AVAILABLE,
+      publishYear: new Date().getFullYear(),
+      academicYear: '2023/2024',
+      isDigital: false,
+      resourceType: ResourceType.PHYSICAL
+    });
+    setIsAddingBook(true);
+  };
+
+  const startEditBook = (book: Book) => {
+    setEditingBook(book);
+    setBookFormData({
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn,
+      category: book.category,
+      department: book.department,
+      course: book.course,
+      coverUrl: book.coverUrl,
+      description: book.description,
+      status: book.status,
+      publishYear: book.publishYear,
+      academicYear: book.academicYear,
+      isDigital: book.isDigital,
+      resourceType: book.resourceType
+    });
+  };
+
+  const handleBookSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    try {
+      if (editingBook && onUpdateBook) {
+        await onUpdateBook(editingBook.id, bookFormData);
+      } else if (onAddBook) {
+        await onAddBook(bookFormData);
+      }
+      setEditingBook(null);
+      setIsAddingBook(false);
+    } catch (err) {
+      // Error handled in App.tsx
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteBook = async (bookId: string) => {
+    if (!onDeleteBook) return;
+    if (!window.confirm('Are you sure you want to remove this resource from the collection?')) return;
+    
+    try {
+      await onDeleteBook(bookId);
+    } catch (err) {
+      // Error handled in App.tsx
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-12 animate-in">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[rgba(201,168,76,0.18)] pb-8">
@@ -131,22 +228,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       <div className="bg-[rgba(255,255,255,0.04)] rounded-[2.5rem] border border-[rgba(201,168,76,0.18)] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-        <div className="flex border-b border-[rgba(201,168,76,0.18)] bg-[rgba(255,255,255,0.02)]">
-          <button 
-            onClick={() => setActiveTab('books')}
-            className={`px-10 py-6 font-bold text-[0.7rem] uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'books' ? 'text-[#c9a84c] border-[#c9a84c] bg-[rgba(201,168,76,0.05)]' : 'text-[#f5f0e8]/40 border-transparent hover:text-[#f5f0e8]'}`}
-          >
-            Resources
-          </button>
-          <button 
-            onClick={() => setActiveTab('users')}
-            className={`px-10 py-6 font-bold text-[0.7rem] uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'users' ? 'text-[#c9a84c] border-[#c9a84c] bg-[rgba(201,168,76,0.05)]' : 'text-[#f5f0e8]/40 border-transparent hover:text-[#f5f0e8]'}`}
-          >
-            Members
-          </button>
+        <div className="flex border-b border-[rgba(201,168,76,0.18)] bg-[rgba(255,255,255,0.02)] items-center justify-between pr-8">
+          <div className="flex">
+            <button 
+              onClick={() => setActiveTab('books')}
+              className={`px-10 py-6 font-bold text-[0.7rem] uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'books' ? 'text-[#c9a84c] border-[#c9a84c] bg-[rgba(201,168,76,0.05)]' : 'text-[#f5f0e8]/40 border-transparent hover:text-[#f5f0e8]'}`}
+            >
+              Resources
+            </button>
+            <button 
+              onClick={() => setActiveTab('users')}
+              className={`px-10 py-6 font-bold text-[0.7rem] uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'users' ? 'text-[#c9a84c] border-[#c9a84c] bg-[rgba(201,168,76,0.05)]' : 'text-[#f5f0e8]/40 border-transparent hover:text-[#f5f0e8]'}`}
+            >
+              Members
+            </button>
+            <button 
+              onClick={() => setActiveTab('circulation')}
+              className={`px-10 py-6 font-bold text-[0.7rem] uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'circulation' ? 'text-[#c9a84c] border-[#c9a84c] bg-[rgba(201,168,76,0.05)]' : 'text-[#f5f0e8]/40 border-transparent hover:text-[#f5f0e8]'}`}
+            >
+              Circulation
+            </button>
+          </div>
+          
+          {activeTab === 'books' && (
+            <button 
+              onClick={startAddBook}
+              className="px-6 py-2.5 rounded-xl bg-[#c9a84c] text-[#050d1a] font-bold text-[0.65rem] uppercase tracking-widest hover:bg-[#f0c84a] transition-all active:scale-95 shadow-[0_10px_20px_rgba(201,168,76,0.15)]"
+            >
+              + Add Resource
+            </button>
+          )}
         </div>
         
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-hide">
           {activeTab === 'books' ? (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -200,13 +314,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <span className="text-[0.7rem] font-bold text-[#f5f0e8]/40 uppercase tracking-widest">{book.department}</span>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <button className="text-[#f5f0e8]/20 hover:text-[#c9a84c] transition-colors">⚙️</button>
+                      <div className="flex items-center justify-end gap-3">
+                        <button onClick={() => startEditBook(book)} className="text-[#f5f0e8]/20 hover:text-[#c9a84c] transition-colors">✏️</button>
+                        <button onClick={() => handleDeleteBook(book.id)} className="text-[#f5f0e8]/20 hover:text-rose-500 transition-colors">🗑️</button>
+                        <button className="text-[#f5f0e8]/20 hover:text-[#c9a84c] transition-colors">⚙️</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          ) : (
+          ) : activeTab === 'users' ? (
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[#f5f0e8]/30 text-[0.65rem] font-bold uppercase tracking-widest border-b border-[rgba(201,168,76,0.1)]">
@@ -234,6 +352,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <span className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-bold uppercase tracking-widest border ${
                         u.role === UserRole.LECTURER ? 'bg-[rgba(168,85,247,0.1)] text-[#a855f7] border-[rgba(168,85,247,0.2)]' : 
                         u.role === UserRole.STUDENT ? 'bg-[rgba(79,110,247,0.1)] text-[#4f6ef7] border-[rgba(79,110,247,0.2)]' : 
+                        u.role === UserRole.LIBRARIAN ? 'bg-[rgba(201,168,76,0.1)] text-[#c9a84c] border-[rgba(201,168,76,0.2)]' :
                         'bg-[#c9a84c] text-[#050d1a]'
                       }`}>
                         {u.role}
@@ -274,9 +393,203 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </tbody>
             </table>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-[#f5f0e8]/30 text-[0.65rem] font-bold uppercase tracking-widest border-b border-[rgba(201,168,76,0.1)]">
+                  <th className="px-8 py-6">Resource</th>
+                  <th className="px-8 py-6">Member</th>
+                  <th className="px-8 py-6">Due Date</th>
+                  <th className="px-8 py-6">Fine</th>
+                  <th className="px-8 py-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[rgba(201,168,76,0.08)]">
+                {records.filter(r => !r.returnDate).map(record => {
+                  const book = books.find(b => b.id === record.bookId);
+                  const user = users.find(u => u.id === record.userId);
+                  const fine = libraryService.calculateFine(record.dueDate);
+                  const isOverdue = fine > 0;
+                  
+                  return (
+                    <tr key={record.id} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors group">
+                      <td className="px-8 py-6">
+                        <p className="font-bold text-[#f5f0e8] text-[0.85rem]">{book?.title || 'Unknown'}</p>
+                        <p className="text-[0.65rem] text-[#f5f0e8]/40 uppercase tracking-widest">{book?.author}</p>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="font-bold text-[#f5f0e8] text-[0.85rem]">{user?.name || 'Unknown'}</p>
+                        <p className="text-[0.65rem] text-[#f5f0e8]/40 uppercase tracking-widest">{user?.role}</p>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className={`text-[0.85rem] font-mono ${isOverdue ? 'text-rose-400 font-bold' : 'text-[#f5f0e8]/60'}`}>
+                          {new Date(record.dueDate).toLocaleDateString()}
+                        </p>
+                        {isOverdue && <p className="text-[0.6rem] text-rose-400 font-bold uppercase tracking-widest">Overdue</p>}
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className={`px-2.5 py-1 rounded-lg text-[0.7rem] font-bold ${fine > 0 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'text-[#f5f0e8]/20'}`}>
+                          {fine > 0 ? `${fine.toLocaleString()} UGX` : 'No Fine'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          {onRenew && record.renewalCount < 2 && !isOverdue && (
+                            <button 
+                              onClick={() => onRenew(record.id, record.dueDate, record.renewalCount)}
+                              className="px-3 py-1.5 rounded-lg text-[0.65rem] font-bold uppercase tracking-widest border border-[rgba(201,168,76,0.3)] text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#050d1a] transition-all"
+                            >
+                              Renew
+                            </button>
+                          )}
+                          {onReturn && (
+                            <button 
+                              onClick={() => onReturn(record.bookId, record.userId)}
+                              className="px-3 py-1.5 rounded-lg text-[0.65rem] font-bold uppercase tracking-widest bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] text-[#f5f0e8]/55 hover:text-[#c9a84c] hover:border-[#c9a84c] transition-all"
+                            >
+                              Return
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
+
+      {/* Book Add/Edit Modal */}
+      {(isAddingBook || editingBook) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#050d1a]/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[#0a1526] w-full max-w-2xl rounded-[2.5rem] border border-[rgba(201,168,76,0.18)] shadow-[0_40px_100px_rgba(0,0,0,0.6)] overflow-hidden animate-in zoom-in-95">
+            <div className="p-10 border-b border-[rgba(201,168,76,0.18)] flex items-center justify-between">
+              <h2 className="font-playfair text-[1.8rem] font-bold text-[#f5f0e8]">
+                {editingBook ? 'Update' : 'Add'} <em className="italic text-[#c9a84c]">Resource.</em>
+              </h2>
+              <button onClick={() => { setEditingBook(null); setIsAddingBook(false); }} className="text-[#f5f0e8]/40 hover:text-[#f5f0e8] transition-colors text-2xl">×</button>
+            </div>
+            
+            <form onSubmit={handleBookSubmit} className="p-10 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Title</label>
+                  <input 
+                    type="text"
+                    required
+                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.85rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all"
+                    value={bookFormData.title}
+                    onChange={(e) => setBookFormData({ ...bookFormData, title: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Author</label>
+                  <input 
+                    type="text"
+                    required
+                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.85rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all"
+                    value={bookFormData.author}
+                    onChange={(e) => setBookFormData({ ...bookFormData, author: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">ISBN</label>
+                  <input 
+                    type="text"
+                    required
+                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.85rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all"
+                    value={bookFormData.isbn}
+                    onChange={(e) => setBookFormData({ ...bookFormData, isbn: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Category</label>
+                  <input 
+                    type="text"
+                    required
+                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.85rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all"
+                    value={bookFormData.category}
+                    onChange={(e) => setBookFormData({ ...bookFormData, category: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Department</label>
+                  <select 
+                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.8rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all appearance-none"
+                    value={bookFormData.department}
+                    onChange={(e) => setBookFormData({ ...bookFormData, department: e.target.value })}
+                  >
+                    <option value="IT">IT</option>
+                    <option value="Theology">Theology</option>
+                    <option value="Education">Education</option>
+                    <option value="Business">Business</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Resource Type</label>
+                  <select 
+                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.8rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all appearance-none"
+                    value={bookFormData.resourceType}
+                    onChange={(e) => setBookFormData({ ...bookFormData, resourceType: e.target.value as ResourceType })}
+                  >
+                    <option value={ResourceType.PHYSICAL}>Physical Book</option>
+                    <option value={ResourceType.EBOOK}>E-Book</option>
+                    <option value={ResourceType.JOURNAL}>Journal</option>
+                    <option value={ResourceType.THESIS}>Thesis</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Cover URL</label>
+                <input 
+                  type="url"
+                  required
+                  className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.85rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all"
+                  value={bookFormData.coverUrl}
+                  onChange={(e) => setBookFormData({ ...bookFormData, coverUrl: e.target.value })}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[0.7rem] text-[#c9a84c] font-bold tracking-widest uppercase ml-1">Description</label>
+                <textarea 
+                  rows={3}
+                  className="bg-[rgba(255,255,255,0.04)] border border-[rgba(201,168,76,0.18)] rounded-xl py-3 px-4 text-[0.85rem] text-[#f5f0e8] outline-none focus:border-[#c9a84c] transition-all resize-none"
+                  value={bookFormData.description}
+                  onChange={(e) => setBookFormData({ ...bookFormData, description: e.target.value })}
+                />
+              </div>
+
+              <div className="pt-6 flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => { setEditingBook(null); setIsAddingBook(false); }}
+                  className="flex-1 py-4 text-[0.8rem] font-bold text-[#f5f0e8]/40 hover:text-[#f5f0e8] transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isUpdating}
+                  className="flex-1 bg-[#c9a84c] text-[#050d1a] py-4 rounded-xl font-bold text-[0.85rem] shadow-[0_10px_30px_rgba(201,168,76,0.2)] hover:shadow-[0_15px_40px_rgba(201,168,76,0.3)] transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isUpdating ? 'Saving...' : editingBook ? 'Update Resource' : 'Add Resource'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* User Edit Modal */}
       {editingUser && (
@@ -322,6 +635,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   >
                     <option value={UserRole.STUDENT}>Student</option>
                     <option value={UserRole.LECTURER}>Lecturer</option>
+                    <option value={UserRole.STAFF}>Staff</option>
+                    <option value={UserRole.LIBRARIAN}>Librarian</option>
                     <option value={UserRole.ADMIN}>Admin</option>
                   </select>
                 </div>

@@ -7,6 +7,7 @@ import CalendarPage from './pages/CalendarPage';
 import Dashboard from './Dashboard';
 import AdminDashboard from './components/AdminDashboard';
 import Auth from './pages/Auth';
+import Profile from './pages/Profile';
 import LibrarianChat from './components/LibrarianChat';
 import { useLibraryState } from './hooks/useLibraryState';
 import { User, UserRole } from './types';
@@ -84,6 +85,20 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleRenew = async (recordId: string, currentDueDate: string, currentRenewalCount: number) => {
+    if (!user) return;
+    if (currentRenewalCount >= 2) {
+      showNotification('Maximum renewal limit (2) reached for this resource.', 'warning', 'Renewal Limit');
+      return;
+    }
+    try {
+      await actions.renew(recordId, currentDueDate, currentRenewalCount);
+      showNotification('Resource successfully renewed for 14 additional days.', 'success', 'Renewal Success');
+    } catch (err) {
+      showNotification('Failed to renew resource. Please try again.', 'error', 'System Error');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#050d1a] flex flex-col items-center justify-center p-6">
@@ -128,11 +143,31 @@ const AppContent: React.FC = () => {
             records={borrowRecords.filter(r => r.userId === user?.id)}
             reservations={reservations.filter(res => res.userId === user?.id)}
             onReturn={handleReturn}
+            onRenew={handleRenew}
+          />
+        </Layout>
+      } />
+      <Route path="/profile" element={
+        <Layout user={user} onLogout={handleLogout}>
+          <Profile 
+            user={user!} 
+            onUpdate={async (updates) => {
+              try {
+                await actions.updateUser(user!.id, updates);
+                const updatedUser = { ...user!, ...updates };
+                setUser(updatedUser);
+                localStorage.setItem('bbuc_user', JSON.stringify(updatedUser));
+                showNotification('Profile updated successfully.', 'success', 'Profile Update');
+              } catch (err) {
+                showNotification('Failed to update profile.', 'error', 'Profile Error');
+                throw err;
+              }
+            }}
           />
         </Layout>
       } />
       <Route path="/admin" element={
-        user?.role === UserRole.ADMIN ? (
+        (user?.role === UserRole.ADMIN || user?.role === UserRole.LIBRARIAN) ? (
           <Layout user={user} onLogout={handleLogout}>
             <AdminDashboard 
               books={books} 
@@ -168,6 +203,32 @@ const AppContent: React.FC = () => {
                   showNotification('ID card status toggled.', 'info', 'Admin Action');
                 } catch (err) {
                   showNotification('Failed to toggle card status.', 'error', 'Admin Error');
+                }
+              }}
+              onReturn={handleReturn}
+              onRenew={handleRenew}
+              onAddBook={async (book) => {
+                try {
+                  await actions.addBook(book);
+                  showNotification('New resource added to the collection.', 'success', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to add resource.', 'error', 'Admin Error');
+                }
+              }}
+              onUpdateBook={async (bookId, updates) => {
+                try {
+                  await actions.updateBook(bookId, updates);
+                  showNotification('Resource details updated.', 'success', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to update resource.', 'error', 'Admin Error');
+                }
+              }}
+              onDeleteBook={async (bookId) => {
+                try {
+                  await actions.deleteBook(bookId);
+                  showNotification('Resource removed from the collection.', 'success', 'Admin Action');
+                } catch (err) {
+                  showNotification('Failed to remove resource.', 'error', 'Admin Error');
                 }
               }}
             />

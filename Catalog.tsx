@@ -192,15 +192,15 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBor
   const hasActiveFilters = search || categoryFilter !== 'All' || statusFilter !== 'All' || yearFilter !== 'All' || academicYearFilter !== 'All' || selectedDepartments.length > 0 || selectedCourses.length > 0;
 
   return (
-    <div className="space-y-12 max-w-7xl mx-auto pb-24 animate-in">
+    <div className="space-y-8 md:space-y-12 max-w-7xl mx-auto pb-24 animate-in">
       <div className="flex flex-col space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Library Catalogue</h1>
-            <p className="text-slate-500 mt-3 text-lg font-medium">Search across {books.length} academic titles at Bishop Barham College.</p>
+          <div className="px-2 md:px-0">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">Library Catalogue</h1>
+            <p className="text-slate-500 mt-3 text-base md:text-lg font-medium">Search across {books.length} academic titles at Bishop Barham College.</p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 px-2 md:px-0">
             {!canBorrowMore && user.role !== 'ADMIN' && (
               <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100 animate-pulse">
                 <span className="w-2 h-2 bg-rose-500 rounded-full"></span>
@@ -225,8 +225,8 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBor
         </div>
         
         {/* Institutional Advanced Filters Panel */}
-        <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/40 border border-slate-200 space-y-10">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl shadow-slate-200/40 border border-slate-200 space-y-8 md:space-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5">
             <div className="md:col-span-4 relative" ref={suggestionRef}>
               <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                 <Icons.Search />
@@ -312,14 +312,14 @@ const Catalog: React.FC<CatalogProps> = ({ user, books, canBorrowMore, activeBor
                 <button onClick={clearAllDepartments} className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline">Clear</button>
               </div>
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-2 md:gap-4">
               {DEPARTMENTS.map(dept => {
                 const isActive = selectedDepartments.includes(dept);
                 return (
                   <button
                     key={dept}
                     onClick={() => toggleDepartment(dept)}
-                    className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border-2 ${isActive ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-200' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 shadow-sm'}`}
+                    className={`flex items-center gap-2 md:gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all border-2 ${isActive ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-200' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 shadow-sm'}`}
                   >
                     {dept}
                     <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'}`}>{departmentCounts[dept]}</span>

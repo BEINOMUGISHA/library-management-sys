@@ -2,6 +2,8 @@
 export enum UserRole {
   STUDENT = 'STUDENT',
   LECTURER = 'LECTURER',
+  STAFF = 'STAFF',
+  LIBRARIAN = 'LIBRARIAN',
   ADMIN = 'ADMIN'
 }
 
@@ -62,6 +64,8 @@ export interface BorrowRecord {
   borrowDate: string;
   dueDate: string;
   returnDate?: string;
+  renewalCount: number;
+  fineAmount: number;
 }
 
 export interface Reservation {
@@ -83,4 +87,33 @@ export interface AcademicEvent {
 export interface AcademicYearConfig {
   year: string;
   semester: string;
+}
+
+export enum NotificationType {
+  DUE_DATE_REMINDER = 'DUE_DATE_REMINDER',
+  OVERDUE_ALERT = 'OVERDUE_ALERT',
+  BOOK_AVAILABLE = 'BOOK_AVAILABLE',
+  RESERVATION_READY = 'RESERVATION_READY',
+  RESERVATION_EXPIRING = 'RESERVATION_EXPIRING',
+  RENEWAL_REMINDER = 'RENEWAL_REMINDER',
+  ADMIN_ALERT = 'ADMIN_ALERT',
+  INSTITUTIONAL = 'INSTITUTIONAL'
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  createdAt: string;
+  isRead: boolean;
+  metadata?: any; // e.g., bookId, recordId
+}
+
+export interface AvailabilitySubscription {
+  id: string;
+  userId: string;
+  bookId: string;
+  createdAt: string;
 }

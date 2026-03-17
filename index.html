@@ -3,8 +3,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BBUC Library — Institutional eLibrary</title>
+  <meta name="theme-color" content="#050d1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BBUC Library">
+  <link rel="apple-touch-icon" href="/pwa-192x192.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +33,24 @@
       --shadow-gold: 0 0 40px rgba(201,168,76,0.12);
     }
 
+    html.light {
+      --navy-deep: #f5f0e8;
+      --navy-mid: #ffffff;
+      --navy-surface: #e5e0d8;
+      --navy-glass: rgba(255,255,255,0.7);
+      --gold: #7a6030;
+      --gold-bright: #c9a84c;
+      --gold-dim: #c9a84c;
+      --indigo: #2a3a80;
+      --indigo-dim: #4f6ef7;
+      --white: #050d1a;
+      --white-dim: rgba(5,13,26,0.55);
+      --white-faint: rgba(5,13,26,0.08);
+      --glass: rgba(0,0,0,0.04);
+      --glass-border: rgba(122,96,48,0.18);
+      --shadow-gold: 0 0 40px rgba(122,96,48,0.12);
+    }
+
     body {
       font-family: 'DM Sans', sans-serif;
       background-color: var(--navy-deep);
@@ -35,6 +58,7 @@
       font-weight: 300;
       min-height: 100vh;
       overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     /* Grain overlay */

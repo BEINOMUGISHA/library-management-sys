@@ -8,7 +8,9 @@ export const TABLES = {
   BOOKS: 'books',
   PROFILES: 'profiles',
   BORROW_RECORDS: 'borrow_records',
-  RESERVATIONS: 'reservations'
+  RESERVATIONS: 'reservations',
+  NOTIFICATIONS: 'notifications',
+  AVAILABILITY_SUBSCRIPTIONS: 'availability_subscriptions'
 };
 
 let clientInstance: any;
@@ -26,23 +28,27 @@ if (isConfigured) {
 }
 
 if (!clientInstance) {
-  const noop = () => ({
-    select: () => Promise.resolve({ data: null, error: new Error("No database configured") }),
-    insert: () => Promise.resolve({ data: null, error: new Error("No database configured") }),
-    update: () => ({ 
-      eq: () => Promise.resolve({ data: null, error: new Error("No database configured") }) 
-    }),
-    delete: () => ({ 
-      eq: () => Promise.resolve({ data: null, error: new Error("No database configured") }) 
-    }),
-    eq: () => noop(),
-    on: () => noop(),
-    subscribe: () => ({ unsubscribe: () => {} }),
-  });
+  const createMockQueryBuilder = () => {
+    const builder: any = Promise.resolve({ data: null, error: null });
+    
+    builder.select = () => builder;
+    builder.insert = () => builder;
+    builder.update = () => builder;
+    builder.delete = () => builder;
+    builder.eq = () => builder;
+    builder.is = () => builder;
+    builder.single = () => builder;
+    builder.order = () => builder;
+    builder.limit = () => builder;
+    builder.on = () => builder;
+    builder.subscribe = () => ({ unsubscribe: () => {} });
+    
+    return builder;
+  };
 
   clientInstance = {
-    from: () => noop(),
-    channel: () => noop(),
+    from: () => createMockQueryBuilder(),
+    channel: () => createMockQueryBuilder(),
     removeChannel: () => {},
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),

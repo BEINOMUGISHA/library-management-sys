@@ -69,7 +69,11 @@ export const useLibraryState = () => {
       updateStatus: libraryService.updateBookStatus,
       issueCard: libraryService.issueLibraryCard,
       updateUser: libraryService.updateUserProfile,
-      toggleCardStatus: libraryService.toggleLibraryCardStatus
+      toggleCardStatus: libraryService.toggleLibraryCardStatus,
+      renew: libraryService.renewBook,
+      addBook: libraryService.addBook,
+      updateBook: libraryService.updateBook,
+      deleteBook: libraryService.deleteBook
     }
   };
 };
